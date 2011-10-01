@@ -15,9 +15,11 @@
  */
 package org.tyrannyofheaven.bukkit.PowerTool;
 
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.error;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.registerEvent;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,12 +72,12 @@ public class PowerToolPlayerListener extends PlayerListener {
             if (action != null) {
                 String command = pt.getCommand(action);
                 if (command != null) {
-                    plugin.debug("Executing command: %s", command);
+                    debug(plugin, "Executing command: %s", command);
                     try {
                         plugin.getServer().dispatchCommand(event.getPlayer(), command);
                     }
                     catch (CommandException e) {
-                        plugin.error("Execution failed: %s", command, e);
+                        error(plugin, "Execution failed: %s", command, e);
                     }
                     event.setCancelled(true);
                 }

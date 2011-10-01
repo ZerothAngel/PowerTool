@@ -18,7 +18,7 @@ package org.tyrannyofheaven.bukkit.PowerTool;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.tyrannyofheaven.bukkit.util.ToHUtils;
+import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 
 public class PowerTool {
 
@@ -33,7 +33,7 @@ public class PowerTool {
     public void setCommand(PowerToolAction action, String command) {
         if (action == null)
             throw new IllegalArgumentException("action cannot be null");
-        if (ToHUtils.hasText(command)) {
+        if (ToHStringUtils.hasText(command)) {
             commandMap.put(action, command);
         }
         else {

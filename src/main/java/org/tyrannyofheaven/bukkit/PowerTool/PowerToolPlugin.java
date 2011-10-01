@@ -15,14 +15,14 @@
  */
 package org.tyrannyofheaven.bukkit.PowerTool;
 
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 
 public class PowerToolPlugin extends JavaPlugin {
@@ -37,7 +37,7 @@ public class PowerToolPlugin extends JavaPlugin {
             playerStates.clear();
         }
 
-        log("%s disabled.", getDescription().getVersion());
+        log(this, "%s disabled.", getDescription().getVersion());
     }
 
     @Override
@@ -46,21 +46,9 @@ public class PowerToolPlugin extends JavaPlugin {
 
         (new PowerToolPlayerListener(this)).registerEvents();
 
-        log("%s enabled.", getDescription().getVersion());
+        log(this, "%s enabled.", getDescription().getVersion());
         
 //        getLogger().setLevel(Level.FINE);
-    }
-
-    public void log(String format, Object... args) {
-        ToHUtils.log(this, Level.INFO, format, args);
-    }
-
-    public void debug(String format, Object... args) {
-        ToHUtils.log(this, Level.FINE, format, args);
-    }
-
-    public void error(String format, Object... args) {
-        ToHUtils.log(this, Level.SEVERE, format, args);
     }
 
     Logger getLogger() {
