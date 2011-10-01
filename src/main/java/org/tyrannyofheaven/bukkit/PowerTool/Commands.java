@@ -49,7 +49,7 @@ public class Commands {
 
     @Command(value="powertool", description="Associate a command with the current item", varargs="command")
     @Require("powertool.use")
-    public void powertool(CommandSender sender, String[] args, @Option({"-r", "--right"}) Boolean right, @Option({"-h", "--help"}) Boolean help, HelpBuilder helpBuilder) {
+    public void powertool(CommandSender sender, String[] args, @Option({"-r", "--right"}) Boolean right, @Option({"-c", "--clear"}) Boolean clear, @Option({"-h", "--help"}) Boolean help, HelpBuilder helpBuilder) {
         // Doesn't make sense for non-players
         if (!(sender instanceof Player)) {
             sendMessage(sender, colorize("`rSilly %s, power tools are for players!"), sender.getName());
@@ -74,9 +74,15 @@ public class Commands {
             return;
         }
 
+        if (clear != null && clear) {
+            // Clear all actions
+            plugin.removePowerTool(player, itemId);
+            sendMessage(player, colorize("`yPower tool cleared."));
+            return;
+        }
+
         // Determine action
         PowerToolAction action = PowerToolAction.LEFT_CLICK;
-        
         if (right != null && right)
             action = PowerToolAction.RIGHT_CLICK;
         
