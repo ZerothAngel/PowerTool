@@ -75,7 +75,7 @@ public class PowerToolPlayerListener extends PlayerListener {
                         plugin.getServer().dispatchCommand(event.getPlayer(), command);
                     }
                     catch (CommandException e) {
-                        plugin.error("Power tool execution failed:", e);
+                        plugin.error("Execution failed: %s", command, e);
                     }
                     event.setCancelled(true);
                 }
@@ -94,7 +94,7 @@ public class PowerToolPlayerListener extends PlayerListener {
         PowerTool pt = plugin.getPowerTool(event.getPlayer(), itemId, false);
         if (pt != null) {
             boolean headerSent = false;
-            
+
             for (PowerToolAction action : PowerToolAction.values()) {
                 String command = pt.getCommand(action);
                 if (command != null) {

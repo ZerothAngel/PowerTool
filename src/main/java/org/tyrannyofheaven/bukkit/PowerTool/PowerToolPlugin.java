@@ -48,7 +48,7 @@ public class PowerToolPlugin extends JavaPlugin {
 
         log("%s enabled.", getDescription().getVersion());
         
-        getLogger().setLevel(Level.FINE);
+//        getLogger().setLevel(Level.FINE);
     }
 
     public void log(String format, Object... args) {
