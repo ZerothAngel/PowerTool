@@ -1,16 +1,15 @@
 name: PowerTool
 version: ${version}
 main: org.tyrannyofheaven.bukkit.PowerTool.PowerToolPlugin
-description: Temporarily associate commands with items in-hand
+description: Temporarily bind commands to the current in-hand item
 author: ZerothAngel
 
 commands:
   powertool:
     description: Set or clear a powertool
     aliases: pt
-    usage: /<command> [-lr] <command-to-execute>
 
 permissions:
   powertool.use:
     description: Allows use of the /powertool command
-    default: true
+    default: op
