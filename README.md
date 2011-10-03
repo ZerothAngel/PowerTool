@@ -4,6 +4,6 @@ Originally requested by InflamedSebi [in this thread](http://forums.bukkit.org/t
 
 ## To Do ##
 
-*   Simple substitutions. Perhaps %player% and %location%, which would be replaced by the currently targeted player and the location of the currently targeted block respectively.
+*  More substitutions. Perhaps %location%, which would be replaced by the
+   location of the currently targeted block respectively.
 *   Persistence &mdash; save powertools to database.
-

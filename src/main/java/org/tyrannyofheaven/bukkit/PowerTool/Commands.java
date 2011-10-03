@@ -106,7 +106,7 @@ public class Commands {
                 }
             }
 
-            // Set the command
+            // Check for tokens
             boolean hasPlayerToken = false;
             for (String arg : args) {
                 if (plugin.getPlayerToken().equals(arg)) {
@@ -115,6 +115,7 @@ public class Commands {
                 }
             }
 
+            // Set the command
             plugin.getPowerTool(player, itemId, true).setCommand(action, delimitedString(" ", (Object[])args), hasPlayerToken);
             sendMessage(player, colorize("`yPower tool (`Y%s`y) set."), action.getDisplayName());
         }

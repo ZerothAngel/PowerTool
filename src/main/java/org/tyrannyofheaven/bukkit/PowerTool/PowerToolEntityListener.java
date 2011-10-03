@@ -1,11 +1,9 @@
 package org.tyrannyofheaven.bukkit.PowerTool;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
-import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.error;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.registerEvent;
 
 import org.bukkit.Material;
-import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -56,14 +54,7 @@ public class PowerToolEntityListener extends EntityListener {
                         }
                         
                         if (commandString != null) {
-                            // TODO Refactor me
-                            debug(plugin, "Executing command: %s", commandString);
-                            try {
-                                plugin.getServer().dispatchCommand(attacker, commandString);
-                            }
-                            catch (CommandException ex) {
-                                error(plugin, "Execution failed: %s", commandString, ex);
-                            }
+                            plugin.execute(attacker, commandString);
                             event.setCancelled(true);
                         }
                     }

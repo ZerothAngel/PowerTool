@@ -15,6 +15,8 @@
  */
 package org.tyrannyofheaven.bukkit.PowerTool;
 
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.error;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 
 import java.util.HashMap;
@@ -22,6 +24,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
@@ -102,6 +105,16 @@ public class PowerToolPlugin extends JavaPlugin {
     void forgetPlayer(Player player) {
         synchronized (playerStates) {
             playerStates.remove(player.getName());
+        }
+    }
+
+    void execute(Player player, String commandString) {
+        debug(this, "Executing command: %s", commandString);
+        try {
+            getServer().dispatchCommand(player, commandString);
+        }
+        catch (CommandException e) {
+            error(this, "Execution failed: %s", commandString, e);
         }
     }
 
