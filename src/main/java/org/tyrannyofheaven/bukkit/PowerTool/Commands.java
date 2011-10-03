@@ -90,7 +90,7 @@ public class Commands {
             // Clear the command
             PowerTool pt = plugin.getPowerTool(player, itemId, false);
             if (pt != null) {
-                pt.setCommand(action, null);
+                pt.clearCommand(action);
                 if (pt.isEmpty())
                     plugin.removePowerTool(player, itemId);
             }
@@ -107,7 +107,15 @@ public class Commands {
             }
 
             // Set the command
-            plugin.getPowerTool(player, itemId, true).setCommand(action, delimitedString(" ", (Object[])args));
+            boolean hasPlayerToken = false;
+            for (String arg : args) {
+                if (plugin.getPlayerToken().equals(arg)) {
+                    hasPlayerToken = true;
+                    break;
+                }
+            }
+
+            plugin.getPowerTool(player, itemId, true).setCommand(action, delimitedString(" ", (Object[])args), hasPlayerToken);
             sendMessage(player, colorize("`yPower tool (`Y%s`y) set."), action.getDisplayName());
         }
     }

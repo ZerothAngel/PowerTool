@@ -22,27 +22,56 @@ import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 
 public class PowerTool {
 
-    private Map<PowerToolAction, String> commandMap = new HashMap<PowerToolAction, String>();
+    private Map<PowerToolAction, Command> commandMap = new HashMap<PowerToolAction, Command>();
 
-    public String getCommand(PowerToolAction action) {
+    public Command getCommand(PowerToolAction action) {
         if (action == null)
             throw new IllegalArgumentException("action cannot be null");
         return commandMap.get(action);
     }
 
-    public void setCommand(PowerToolAction action, String command) {
+    public void setCommand(PowerToolAction action, String command, boolean hasPlayerToken) {
         if (action == null)
             throw new IllegalArgumentException("action cannot be null");
-        if (ToHStringUtils.hasText(command)) {
-            commandMap.put(action, command);
-        }
-        else {
-            commandMap.remove(action);
-        }
+        if (!ToHStringUtils.hasText(command))
+            throw new IllegalArgumentException("command must have a value");
+        commandMap.put(action, new Command(command, hasPlayerToken));
+    }
+
+    public void clearCommand(PowerToolAction action) {
+        if (action == null)
+            throw new IllegalArgumentException("action cannot be null");
+        commandMap.remove(action);
     }
 
     public boolean isEmpty() {
         return commandMap.isEmpty();
+    }
+
+    public static class Command {
+        
+        private final boolean playerToken;
+        
+        private final String command;
+        
+        private Command(String command, boolean playerToken) {
+            this.playerToken = playerToken;
+            this.command = command;
+        }
+
+        public boolean hasPlayerToken() {
+            return playerToken;
+        }
+
+        public String getCommand() {
+            return command;
+        }
+        
+        @Override
+        public String toString() {
+            return getCommand();
+        }
+
     }
 
 }

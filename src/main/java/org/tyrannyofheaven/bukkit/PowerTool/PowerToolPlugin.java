@@ -19,6 +19,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.entity.Player;
@@ -27,9 +28,13 @@ import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 
 public class PowerToolPlugin extends JavaPlugin {
 
+    private static final String DEFAULT_PLAYER_TOKEN = "%p";
+
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
+
+    private String playerToken;
 
     @Override
     public void onDisable() {
@@ -42,17 +47,28 @@ public class PowerToolPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        playerToken = getConfiguration().getString("player-token", DEFAULT_PLAYER_TOKEN);
+        boolean debug = getConfiguration().getBoolean("debug", false);
+        getConfiguration().setProperty("player-token", playerToken);
+        getConfiguration().setProperty("debug", debug);
+        getConfiguration().save();
+
+        getLogger().setLevel(debug ? Level.FINE : null);
+
         (new ToHCommandExecutor<PowerToolPlugin>(this, new Commands(this))).registerCommands();
 
         (new PowerToolPlayerListener(this)).registerEvents();
+        (new PowerToolEntityListener(this)).registerEvents();
 
         log(this, "%s enabled.", getDescription().getVersion());
-        
-//        getLogger().setLevel(Level.FINE);
     }
 
     Logger getLogger() {
         return logger;
+    }
+
+    String getPlayerToken() {
+        return playerToken;
     }
 
     PowerTool getPowerTool(Player player, int itemId, boolean create) {

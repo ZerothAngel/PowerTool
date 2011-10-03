@@ -25,9 +25,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.Material;
 import org.bukkit.command.CommandException;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerListener;
@@ -56,6 +60,7 @@ public class PowerToolPlayerListener extends PlayerListener {
 
     void registerEvents() {
         registerEvent("PLAYER_INTERACT", this, Priority.Normal, plugin);
+        registerEvent("PLAYER_INTERACT_ENTITY", this, Priority.Normal, plugin);
         registerEvent("PLAYER_QUIT", this, Priority.Monitor, plugin);
         registerEvent("PLAYER_ITEM_HELD", this, Priority.Monitor, plugin);
     }
@@ -66,15 +71,17 @@ public class PowerToolPlayerListener extends PlayerListener {
         // Interaction will be canceled if it doesn't hit a block, which is
         // something we care about.
 
+        if (!event.hasItem()) return; // no bare fists (for now...)
+
         PowerTool pt = plugin.getPowerTool(event.getPlayer(), event.getItem().getTypeId(), false);
         if (pt != null) {
             PowerToolAction action = actionMap.get(event.getAction());
             if (action != null) {
-                String command = pt.getCommand(action);
-                if (command != null) {
+                PowerTool.Command command = pt.getCommand(action);
+                if (command != null && !command.hasPlayerToken()) {
                     debug(plugin, "Executing command: %s", command);
                     try {
-                        plugin.getServer().dispatchCommand(event.getPlayer(), command);
+                        plugin.getServer().dispatchCommand(event.getPlayer(), command.toString());
                     }
                     catch (CommandException e) {
                         error(plugin, "Execution failed: %s", command, e);
@@ -93,12 +100,15 @@ public class PowerToolPlayerListener extends PlayerListener {
     @Override
     public void onItemHeldChange(PlayerItemHeldEvent event) {
         int itemId = event.getPlayer().getInventory().getItem(event.getNewSlot()).getTypeId();
+        
+        if (itemId == Material.AIR.getId()) return;
+
         PowerTool pt = plugin.getPowerTool(event.getPlayer(), itemId, false);
         if (pt != null) {
             boolean headerSent = false;
 
             for (PowerToolAction action : PowerToolAction.values()) {
-                String command = pt.getCommand(action);
+                PowerTool.Command command = pt.getCommand(action);
                 if (command != null) {
                     if (!headerSent) {
                         sendMessage(event.getPlayer(), colorize("`yPower tool:"));
@@ -106,6 +116,47 @@ public class PowerToolPlayerListener extends PlayerListener {
                     }
                     
                     sendMessage(event.getPlayer(), colorize("  `y%s: `g%s"), action.getDisplayName(), command);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+        int itemId = event.getPlayer().getItemInHand().getTypeId();
+        
+        if (itemId == Material.AIR.getId()) return;
+        
+        PowerTool pt = plugin.getPowerTool(event.getPlayer(), itemId, false);
+        if (pt != null) {
+            PowerTool.Command command = pt.getCommand(PowerToolAction.RIGHT_CLICK);
+            if (command != null) {
+                String commandString = null;
+                
+                if (command.hasPlayerToken()) {
+                    // Player is required, only execute if player was target
+                    Entity entity = event.getRightClicked();
+                    if (entity instanceof Player) {
+                        Player clicked = (Player)entity;
+                        debug(plugin, "%s right-clicked %s", event.getPlayer().getName(), clicked.getName());
+
+                        commandString = command.getCommand().replace(plugin.getPlayerToken(), clicked.getName());
+                    }
+                }
+                else {
+                    // If no token, execute no matter what
+                    commandString = command.getCommand();
+                }
+                
+                if (commandString != null) {
+                    debug(plugin, "Executing command: %s", commandString);
+                    try {
+                        plugin.getServer().dispatchCommand(event.getPlayer(), commandString);
+                    }
+                    catch (CommandException e) {
+                        error(plugin, "Execution failed: %s", commandString, e);
+                    }
+                    event.setCancelled(true);
                 }
             }
         }
