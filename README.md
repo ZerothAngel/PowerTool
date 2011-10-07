@@ -60,6 +60,6 @@ Sources may be found on GitHub:
 ## To Do ##
 
 *  More substitutions. Perhaps %loc, which would be replaced by the location of
-    the currently targeted block respectively.
+    the currently targeted block.
 *   Persistence &mdash; save powertools to database or at least let permanent
     ones be defined in config.yml.
