@@ -18,6 +18,7 @@ package org.tyrannyofheaven.bukkit.PowerTool;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
+import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requirePermission;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,8 @@ import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 
 public class Commands {
+
+    private static final String MODIFY_GLOBAL_ERROR_MSG = "`rCannot modify a global power tool!";
 
     private final PowerToolPlugin plugin;
 
@@ -49,7 +52,15 @@ public class Commands {
 
     @Command(value="powertool", description="Associate a command with the current item", varargs="command")
     @Require("powertool.use")
-    public void powertool(CommandSender sender, String[] args, @Option({"-r", "--right"}) Boolean right, @Option({"-c", "--clear"}) Boolean clear, @Option({"-h", "--help"}) Boolean help, HelpBuilder helpBuilder) {
+    public void powertool(CommandSender sender, String[] args, @Option({"-r", "--right"}) Boolean right, @Option({"-c", "--clear"}) Boolean clear, @Option({"-h", "--help"}) Boolean help, HelpBuilder helpBuilder,
+            @Option({"-R", "--reload"}) Boolean reload) {
+        if (reload != null && reload) {
+            requirePermission(sender, "powertool.reload");
+            plugin.reload();
+            sendMessage(sender, colorize("`yconfig.yml reloaded."));
+            return;
+        }
+
         // Doesn't make sense for non-players
         if (!(sender instanceof Player)) {
             sendMessage(sender, colorize("`rSilly %s, power tools are for players!"), sender.getName());
@@ -76,8 +87,10 @@ public class Commands {
 
         if (clear != null && clear) {
             // Clear all actions
-            plugin.removePowerTool(player, itemId);
-            sendMessage(player, colorize("`yPower tool cleared."));
+            if (plugin.removePowerTool(player, itemId))
+                sendMessage(player, colorize("`yPower tool cleared."));
+            else
+                sendMessage(player, colorize(MODIFY_GLOBAL_ERROR_MSG));
             return;
         }
 
@@ -90,6 +103,11 @@ public class Commands {
             // Clear the command
             PowerTool pt = plugin.getPowerTool(player, itemId, false);
             if (pt != null) {
+                if (pt.isGlobal()) {
+                    // TODO admin permissions?
+                    sendMessage(player, colorize(MODIFY_GLOBAL_ERROR_MSG));
+                    return;
+                }
                 pt.clearCommand(action);
                 if (pt.isEmpty())
                     plugin.removePowerTool(player, itemId);
@@ -116,7 +134,13 @@ public class Commands {
             }
 
             // Set the command
-            plugin.getPowerTool(player, itemId, true).setCommand(action, delimitedString(" ", (Object[])args), hasPlayerToken);
+            PowerTool pt = plugin.getPowerTool(player, itemId, true);
+            if (pt.isGlobal()) {
+                // TODO admin permissions?
+                sendMessage(player, colorize(MODIFY_GLOBAL_ERROR_MSG));
+                return;
+            }
+            pt.setCommand(action, delimitedString(" ", (Object[])args), hasPlayerToken);
             sendMessage(player, colorize("`yPower tool (`Y%s`y) set."), action.getDisplayName());
         }
     }

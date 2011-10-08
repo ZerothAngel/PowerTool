@@ -22,7 +22,17 @@ import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 
 public class PowerTool {
 
-    private Map<PowerToolAction, Command> commandMap = new HashMap<PowerToolAction, Command>();
+    private final Map<PowerToolAction, Command> commandMap = new HashMap<PowerToolAction, Command>();
+
+    private final boolean global;
+
+    public PowerTool() {
+        this(false);
+    }
+
+    public PowerTool(boolean global) {
+        this.global = global;
+    }
 
     public Command getCommand(PowerToolAction action) {
         if (action == null)
@@ -46,6 +56,10 @@ public class PowerTool {
 
     public boolean isEmpty() {
         return commandMap.isEmpty();
+    }
+
+    public boolean isGlobal() {
+        return global;
     }
 
     public static class Command {

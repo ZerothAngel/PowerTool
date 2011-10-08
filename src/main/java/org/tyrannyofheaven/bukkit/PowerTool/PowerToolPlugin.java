@@ -24,9 +24,13 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.bukkit.Material;
 import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.config.Configuration;
+import org.tyrannyofheaven.bukkit.PowerTool.dao.PowerToolDao;
+import org.tyrannyofheaven.bukkit.PowerTool.dao.YamlPowerToolDao;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 
 public class PowerToolPlugin extends JavaPlugin {
@@ -35,7 +39,11 @@ public class PowerToolPlugin extends JavaPlugin {
 
     private final Logger logger = Logger.getLogger(getClass().getName());
 
+    private final Map<Integer, PowerTool> globalPowerTools = new HashMap<Integer, PowerTool>();
+
     private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
+
+    private PowerToolDao dao;
 
     private String playerToken;
 
@@ -50,37 +58,64 @@ public class PowerToolPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        playerToken = getConfiguration().getString("player-token", DEFAULT_PLAYER_TOKEN);
-        boolean debug = getConfiguration().getBoolean("debug", false);
-        getConfiguration().setProperty("player-token", playerToken);
-        getConfiguration().setProperty("debug", debug);
-        getConfiguration().save();
+        // Set up DAO
+        dao = new YamlPowerToolDao(this, getConfiguration());
 
-        getLogger().setLevel(debug ? Level.FINE : null);
+        // Read/create config
+        readConfig();
 
+        // Install command handler
         (new ToHCommandExecutor<PowerToolPlugin>(this, new Commands(this))).registerCommands();
 
+        // Install event listeners
         (new PowerToolPlayerListener(this)).registerEvents();
         (new PowerToolEntityListener(this)).registerEvents();
 
         log(this, "%s enabled.", getDescription().getVersion());
     }
 
+    private void readConfig() {
+        Configuration config = getConfiguration();
+        
+        playerToken = config.getString("player-token", DEFAULT_PLAYER_TOKEN);
+        boolean debug = config.getBoolean("debug", false);
+
+        // Read global powertools
+        globalPowerTools.clear();
+        globalPowerTools.putAll(getDao().loadPowerTools(null));
+
+        config.setProperty("player-token", playerToken);
+        config.setProperty("debug", debug);
+        config.save();
+
+        getLogger().setLevel(debug ? Level.FINE : null);
+    }
+
     Logger getLogger() {
         return logger;
     }
 
-    String getPlayerToken() {
+    PowerToolDao getDao() {
+        return dao;
+    }
+
+    public String getPlayerToken() {
         return playerToken;
     }
 
     PowerTool getPowerTool(Player player, int itemId, boolean create) {
-        PlayerState ps = getPlayerState(player, create);
+        // Fetch global PowerTool first
+        PowerTool pt = globalPowerTools.get(itemId);
 
-        if (ps != null)
-            return ps.getPowerTool(itemId, create);
-        else
-            return null;
+        // If not defined, fetch player-specific PowerTool
+        if (pt == null) {
+            PlayerState ps = getPlayerState(player, create);
+
+            if (ps != null)
+                pt = ps.getPowerTool(itemId, create);
+        }
+
+        return pt;
     }
 
     private PlayerState getPlayerState(Player player, boolean create) {
@@ -95,11 +130,14 @@ public class PowerToolPlugin extends JavaPlugin {
         return ps;
     }
 
-    void removePowerTool(Player player, int itemId) {
+    boolean removePowerTool(Player player, int itemId) {
+        if (globalPowerTools.containsKey(itemId)) return false;
+
         PlayerState ps = getPlayerState(player, false);
         
         if (ps != null)
             ps.removePowerTool(itemId);
+        return true;
     }
 
     void forgetPlayer(Player player) {
@@ -116,6 +154,17 @@ public class PowerToolPlugin extends JavaPlugin {
         catch (CommandException e) {
             error(this, "Execution failed: %s", commandString, e);
         }
+    }
+
+    synchronized void reload() {
+        getConfiguration().load();
+        readConfig();
+    }
+
+    public static String getMaterialName(Material material) {
+        if (material == null)
+            throw new IllegalArgumentException("material cannot be null");
+        return material.name().toLowerCase().replaceAll("_", "");
     }
 
     private static class PlayerState {

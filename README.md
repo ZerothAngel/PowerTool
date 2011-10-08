@@ -6,7 +6,7 @@ PowerTool allows you to temporarily bind commands to your in-hand items. Any
 item may be assigned commands for both left-click and right-click. Bound
 commands remain until you either log off or you manually clear the binding.
 
-Bound commands may also include special player "token," `%p` by default, which
+Bound commands may also include a special player "token," `%p` by default, which
 will be replaced by the name of the player you left-click or right-click on.
 
 ## Commands ##
@@ -22,13 +22,37 @@ There's only one command, `/powertool` which may also be abbreviated `/pt`:
 	command is cleared from the current item. Use `/powertool -r` to clear the
 	right-click command.
 *   `/powertool -c` &mdash; Clears all bound commands from the current item.
+*   `/powertool -R` &mdash; Re-reads config.yml.
 
 ## Permissions ##
 
-The only (Superperms) permission node is `powertool.use` which allows the use of
-the `/powertool` command. By default, ops have this permission.
+PowerTool only supports Bukkit permissions (aka Superperms). By default, ops
+have all permissions.
 
-(To change the default, edit plugin.yml in the JAR file.)
+*   `powertool.use` &mdash; Allows setting and using power tools.
+*   `powertool.reload` &mdash; Allows use of `/powertool -R`
+
+## Global, Administrator-defined Binds ##
+
+By editing config.yml, the server administrator can define binds for use by
+anyone with the `powertool.use` permission.
+
+For example:
+
+    powertools:
+	    string:
+		    left-click: plugins
+			right-click: version
+
+The item ID ("string" in the above example) may be an integer item ID or a
+name. If using an integer item ID, you must quote it as a string, e.g. `'287'`
+for "string." If using a name, you must use a standard Bukkit material name
+([found here](https://github.com/Bukkit/Bukkit/blob/master/src/main/java/org/bukkit/Material.java)). For
+example, for golden apples, you may use one of:
+
+*   `GOLDEN_APPLE`
+*   `'golden apple'` (since it has a space, it must be quoted)
+*   `goldenapple`
 
 ## Examples ##
 
@@ -61,5 +85,10 @@ Sources may be found on GitHub:
 
 *  More substitutions. Perhaps %loc, which would be replaced by the location of
     the currently targeted block.
-*   Persistence &mdash; save powertools to database or at least let permanent
-    ones be defined in config.yml.
+*   Allow setting/clearing global power tools from the command line (for those
+    with the proper permission, of course).
+*   Allow players to save player-specific power tools (also permission
+    controlled).
+*   In the case of global power tools, allow permissions to control which power
+    tools may be used. (Also supporting some sort of wildcard permission...)
+*   Allow player-specific power tools to override global ones.

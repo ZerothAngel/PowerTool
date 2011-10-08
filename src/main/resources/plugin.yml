@@ -13,3 +13,8 @@ permissions:
   powertool.use:
     description: Allows use of the /powertool command
     default: op
+  powertool.reload:
+    description: Allows use of /powertool -R
+    default: op
+    children:
+      powertool.use: true
