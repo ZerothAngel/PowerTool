@@ -106,10 +106,6 @@ public class PowerToolPlayerListener extends PlayerListener {
                         commandString = command.getCommand().replace(plugin.getPlayerToken(), clicked.getName());
                     }
                 }
-                else {
-                    // If no token, execute no matter what
-                    commandString = command.getCommand();
-                }
                 
                 if (commandString != null) {
                     plugin.execute(event.getPlayer(), commandString);
