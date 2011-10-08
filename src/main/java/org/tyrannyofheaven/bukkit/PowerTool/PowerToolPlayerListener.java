@@ -65,6 +65,8 @@ public class PowerToolPlayerListener extends PlayerListener {
 
     @Override
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if (!event.getPlayer().hasPermission("powertool.use")) return;
+
         // NB: Don't care if it's canceled or not.
         // Interaction will be canceled if it doesn't hit a block, which is
         // something we care about.
@@ -86,6 +88,8 @@ public class PowerToolPlayerListener extends PlayerListener {
 
     @Override
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+        if (!event.getPlayer().hasPermission("powertool.use")) return;
+
         int itemId = event.getPlayer().getItemInHand().getTypeId();
         
         if (itemId == Material.AIR.getId()) return;
@@ -122,6 +126,8 @@ public class PowerToolPlayerListener extends PlayerListener {
 
     @Override
     public void onItemHeldChange(PlayerItemHeldEvent event) {
+        if (!event.getPlayer().hasPermission("powertool.use")) return;
+
         int itemId = event.getPlayer().getInventory().getItem(event.getNewSlot()).getTypeId();
         
         if (itemId == Material.AIR.getId()) return;

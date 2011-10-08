@@ -29,6 +29,8 @@ public class PowerToolEntityListener extends EntityListener {
             if (e.getDamager() instanceof Player) {
                 Player attacker = (Player)e.getDamager();
                 
+                if (!attacker.hasPermission("powertool.use")) return;
+
                 int itemId = attacker.getItemInHand().getTypeId();
                 
                 if (itemId == Material.AIR.getId()) return;
