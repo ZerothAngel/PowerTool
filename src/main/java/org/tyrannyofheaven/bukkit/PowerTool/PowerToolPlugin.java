@@ -19,6 +19,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.error;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -26,11 +27,12 @@ import java.util.logging.Logger;
 
 import org.bukkit.Material;
 import org.bukkit.command.CommandException;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.config.Configuration;
 import org.tyrannyofheaven.bukkit.PowerTool.dao.PowerToolDao;
 import org.tyrannyofheaven.bukkit.PowerTool.dao.YamlPowerToolDao;
+import org.tyrannyofheaven.bukkit.util.ToHFileUtils;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 
 public class PowerToolPlugin extends JavaPlugin {
@@ -42,6 +44,8 @@ public class PowerToolPlugin extends JavaPlugin {
     private final Map<Integer, PowerTool> globalPowerTools = new HashMap<Integer, PowerTool>();
 
     private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
+
+    private FileConfiguration config;
 
     private PowerToolDao dao;
 
@@ -58,11 +62,16 @@ public class PowerToolPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        config = ToHFileUtils.getConfig(this);
+
         // Set up DAO
-        dao = new YamlPowerToolDao(this, getConfiguration());
+        dao = new YamlPowerToolDao(this, new File(getDataFolder(), "config.yml"), config);
 
         // Read/create config
         readConfig();
+
+        // Re-save config
+        ToHFileUtils.saveConfig(this, config);
 
         // Install command handler
         (new ToHCommandExecutor<PowerToolPlugin>(this, new Commands(this))).registerCommands();
@@ -75,18 +84,12 @@ public class PowerToolPlugin extends JavaPlugin {
     }
 
     private void readConfig() {
-        Configuration config = getConfiguration();
-        
         playerToken = config.getString("player-token", DEFAULT_PLAYER_TOKEN);
         boolean debug = config.getBoolean("debug", false);
 
         // Read global powertools
         globalPowerTools.clear();
         globalPowerTools.putAll(getDao().loadPowerTools(null));
-
-        config.setProperty("player-token", playerToken);
-        config.setProperty("debug", debug);
-        config.save();
 
         getLogger().setLevel(debug ? Level.FINE : null);
     }
@@ -157,7 +160,10 @@ public class PowerToolPlugin extends JavaPlugin {
     }
 
     synchronized void reload() {
-        getConfiguration().load();
+        config = ToHFileUtils.getConfig(this);
+        if (getDao() instanceof YamlPowerToolDao) { // groan
+            ((YamlPowerToolDao)getDao()).setConfig(config);
+        }
         readConfig();
     }
 
