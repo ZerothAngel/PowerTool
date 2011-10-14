@@ -63,6 +63,7 @@ public class PowerToolPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         config = ToHFileUtils.getConfig(this);
+        config.options().header(null);
 
         // Set up DAO
         dao = new YamlPowerToolDao(this, new File(getDataFolder(), "config.yml"), config);
