@@ -33,6 +33,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.tyrannyofheaven.bukkit.PowerTool.dao.PowerToolDao;
 import org.tyrannyofheaven.bukkit.PowerTool.dao.YamlPowerToolDao;
 import org.tyrannyofheaven.bukkit.util.ToHFileUtils;
+import org.tyrannyofheaven.bukkit.util.ToHUtils;
+import org.tyrannyofheaven.bukkit.util.VersionInfo;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 
 public class PowerToolPlugin extends JavaPlugin {
@@ -40,6 +42,8 @@ public class PowerToolPlugin extends JavaPlugin {
     private static final String DEFAULT_PLAYER_TOKEN = "%p";
 
     private final Logger logger = Logger.getLogger(getClass().getName());
+
+    private VersionInfo versionInfo;
 
     private final Map<Integer, PowerTool> globalPowerTools = new HashMap<Integer, PowerTool>();
 
@@ -52,12 +56,17 @@ public class PowerToolPlugin extends JavaPlugin {
     private String playerToken;
 
     @Override
+    public void onLoad() {
+        versionInfo = ToHUtils.getVersion(this);
+    }
+
+    @Override
     public void onDisable() {
         synchronized (playerStates) {
             playerStates.clear();
         }
 
-        log(this, "%s disabled.", getDescription().getVersion());
+        log(this, "%s disabled.", versionInfo.getVersionString());
     }
 
     @Override
@@ -81,7 +90,7 @@ public class PowerToolPlugin extends JavaPlugin {
         (new PowerToolPlayerListener(this)).registerEvents();
         (new PowerToolEntityListener(this)).registerEvents();
 
-        log(this, "%s enabled.", getDescription().getVersion());
+        log(this, "%s enabled.", versionInfo.getVersionString());
     }
 
     private void readConfig() {
