@@ -1,16 +1,16 @@
 package org.tyrannyofheaven.bukkit.PowerTool;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.registerEvent;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event.Priority;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityListener;
 
-public class PowerToolEntityListener extends EntityListener {
+public class PowerToolEntityListener implements Listener {
 
     private final PowerToolPlugin plugin;
     
@@ -19,10 +19,10 @@ public class PowerToolEntityListener extends EntityListener {
     }
 
     void registerEvents() {
-        registerEvent("ENTITY_DAMAGE", this, Priority.Normal, plugin);
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    @Override
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onEntityDamage(EntityDamageEvent event) {
         if (event instanceof EntityDamageByEntityEvent) {
             EntityDamageByEntityEvent e = (EntityDamageByEntityEvent)event;

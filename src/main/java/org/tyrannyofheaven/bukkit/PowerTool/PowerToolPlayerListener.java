@@ -18,7 +18,6 @@ package org.tyrannyofheaven.bukkit.PowerTool;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.registerEvent;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,15 +26,16 @@ import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event.Priority;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
-import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-public class PowerToolPlayerListener extends PlayerListener {
+public class PowerToolPlayerListener implements Listener {
 
     private static final Map<Action, PowerToolAction> actionMap;
 
@@ -57,13 +57,10 @@ public class PowerToolPlayerListener extends PlayerListener {
     }
 
     void registerEvents() {
-        registerEvent("PLAYER_INTERACT", this, Priority.Normal, plugin);
-        registerEvent("PLAYER_INTERACT_ENTITY", this, Priority.Normal, plugin);
-        registerEvent("PLAYER_QUIT", this, Priority.Monitor, plugin);
-        registerEvent("PLAYER_ITEM_HELD", this, Priority.Monitor, plugin);
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    @Override
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (!event.getPlayer().hasPermission("powertool.use")) return;
 
@@ -86,7 +83,7 @@ public class PowerToolPlayerListener extends PlayerListener {
         }
     }
 
-    @Override
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         if (!event.getPlayer().hasPermission("powertool.use")) return;
 
@@ -119,12 +116,12 @@ public class PowerToolPlayerListener extends PlayerListener {
         }
     }
 
-    @Override
+    @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.forgetPlayer(event.getPlayer());
     }
 
-    @Override
+    @EventHandler(priority=EventPriority.MONITOR)
     public void onItemHeldChange(PlayerItemHeldEvent event) {
         if (!event.getPlayer().hasPermission("powertool.use")) return;
 

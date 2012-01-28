@@ -101,11 +101,7 @@ public class PowerToolPlugin extends JavaPlugin {
         globalPowerTools.clear();
         globalPowerTools.putAll(getDao().loadPowerTools(null));
 
-        getLogger().setLevel(debug ? Level.FINE : null);
-    }
-
-    Logger getLogger() {
-        return logger;
+        logger.setLevel(debug ? Level.FINE : null);
     }
 
     PowerToolDao getDao() {
