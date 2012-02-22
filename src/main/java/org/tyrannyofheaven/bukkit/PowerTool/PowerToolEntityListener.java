@@ -56,8 +56,13 @@ public class PowerToolEntityListener implements Listener {
                         }
                         
                         if (commandString != null) {
-                            plugin.execute(attacker, commandString);
-                            event.setCancelled(true);
+                            if (command.hasLocationToken()) {
+                                commandString = plugin.substituteLocation(attacker, null, commandString, command.hasAirToken());
+                            }
+                            if (commandString != null) {
+                                plugin.execute(attacker, commandString);
+                                event.setCancelled(true);
+                            }
                         }
                     }
                 }

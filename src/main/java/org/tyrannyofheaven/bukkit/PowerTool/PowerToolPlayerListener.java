@@ -76,8 +76,14 @@ public class PowerToolPlayerListener implements Listener {
             if (action != null) {
                 PowerTool.Command command = pt.getCommand(action);
                 if (command != null && !command.hasPlayerToken()) {
-                    plugin.execute(event.getPlayer(), command.getCommand());
-                    event.setCancelled(true);
+                    String commandString = command.getCommand();
+                    if (command.hasLocationToken()) {
+                        commandString = plugin.substituteLocation(event.getPlayer(), event.getClickedBlock(), commandString, command.hasAirToken());
+                    }
+                    if (commandString != null) {
+                        plugin.execute(event.getPlayer(), commandString);
+                        event.setCancelled(true);
+                    }
                 }
             }
         }
@@ -109,8 +115,13 @@ public class PowerToolPlayerListener implements Listener {
                 }
                 
                 if (commandString != null) {
-                    plugin.execute(event.getPlayer(), commandString);
-                    event.setCancelled(true);
+                    if (command.hasLocationToken()) {
+                        commandString = plugin.substituteLocation(event.getPlayer(), null, commandString, command.hasAirToken());
+                    }
+                    if (commandString != null) {
+                        plugin.execute(event.getPlayer(), commandString);
+                        event.setCancelled(true);
+                    }
                 }
             }
         }

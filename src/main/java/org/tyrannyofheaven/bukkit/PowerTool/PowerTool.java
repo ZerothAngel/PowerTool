@@ -40,12 +40,12 @@ public class PowerTool {
         return commandMap.get(action);
     }
 
-    public void setCommand(PowerToolAction action, String command, boolean hasPlayerToken) {
+    public void setCommand(PowerToolAction action, String command, boolean hasPlayerToken, boolean hasLocationToken, boolean hasAirToken) {
         if (action == null)
             throw new IllegalArgumentException("action cannot be null");
         if (!ToHStringUtils.hasText(command))
             throw new IllegalArgumentException("command must have a value");
-        commandMap.put(action, new Command(command, hasPlayerToken));
+        commandMap.put(action, new Command(command, hasPlayerToken, hasLocationToken, hasAirToken));
     }
 
     public void clearCommand(PowerToolAction action) {
@@ -66,15 +66,29 @@ public class PowerTool {
         
         private final boolean playerToken;
         
+        private final boolean locationToken;
+        
+        private final boolean airToken;
+
         private final String command;
         
-        private Command(String command, boolean playerToken) {
+        private Command(String command, boolean playerToken, boolean locationToken, boolean airToken) {
             this.playerToken = playerToken;
             this.command = command;
+            this.locationToken = locationToken;
+            this.airToken = airToken;
         }
 
         public boolean hasPlayerToken() {
             return playerToken;
+        }
+
+        public boolean hasLocationToken() {
+            return locationToken;
+        }
+        
+        public boolean hasAirToken() {
+            return airToken;
         }
 
         public String getCommand() {

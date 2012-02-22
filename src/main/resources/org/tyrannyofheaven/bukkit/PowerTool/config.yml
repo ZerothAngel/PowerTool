@@ -1,0 +1,13 @@
+config-version: 1
+
+player-token: '%p'
+
+x-token: '%x'
+
+y-token: '%y'
+
+y-air-token: '%Y'
+
+z-token: '%z'
+
+debug: false

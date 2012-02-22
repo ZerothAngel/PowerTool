@@ -1,0 +1,21 @@
+player-token: |
+  This string is replaced with the username of the currently targeted player.
+
+x-token: |
+  This string is replaced with the X-coordinate of the currently targeted
+  block.
+
+y-token: |
+  This string is replaced with the Y-coordinate of the currently targeted
+  block.
+
+y-air-token: |
+  This string is replaced with the Y-coordinate of the nearest air block
+  above the currently targeted block.
+
+z-token: |
+  This string is replaced with the Z-coordinate of the currently targeted
+  block.
+
+debug: |
+  Enable debug logging.

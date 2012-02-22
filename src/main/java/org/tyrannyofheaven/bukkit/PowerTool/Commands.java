@@ -126,11 +126,26 @@ public class Commands {
 
             // Check for tokens
             boolean hasPlayerToken = false;
+            boolean hasLocationToken = false;
+            boolean hasAirToken = false;
             for (String arg : args) {
-                if (plugin.getPlayerToken().equals(arg)) {
+                if (arg.contains(plugin.getPlayerToken())) {
                     hasPlayerToken = true;
-                    break;
                 }
+                // FIXME gotta be a better way to do this
+                else if (arg.contains(plugin.getXToken()) ||
+                        arg.contains(plugin.getYToken()) ||
+                        arg.contains(plugin.getZToken())) {
+                    hasLocationToken = true;
+                }
+                else if (arg.contains(plugin.getYAirToken())) {
+                    hasLocationToken = true;
+                    hasAirToken = true;
+                }
+            }
+            if (hasPlayerToken && hasLocationToken) {
+                sendMessage(player, colorize("`rCannot use player and coordinate tokens simultaneously!"));
+                return;
             }
 
             // Set the command
@@ -140,7 +155,7 @@ public class Commands {
                 sendMessage(player, colorize(MODIFY_GLOBAL_ERROR_MSG));
                 return;
             }
-            pt.setCommand(action, delimitedString(" ", (Object[])args), hasPlayerToken);
+            pt.setCommand(action, delimitedString(" ", (Object[])args), hasPlayerToken, hasLocationToken, hasAirToken);
             sendMessage(player, colorize("`yPower tool (`Y%s`y) set."), action.getDisplayName());
         }
     }

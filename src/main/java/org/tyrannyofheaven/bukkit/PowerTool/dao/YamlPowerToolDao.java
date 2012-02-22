@@ -24,6 +24,8 @@ public class YamlPowerToolDao implements PowerToolDao {
 
     private static final String UNKNOWN_MATERIAL_MSG = "Unknown material '%s'; power tool ignored";
 
+    private static final String BAD_TOKENS_MSG = "Power tool '%s' uses both player and coordinate tokens; ignored";
+
     private final PowerToolPlugin plugin;
 
     private final File file;
@@ -77,7 +79,7 @@ public class YamlPowerToolDao implements PowerToolDao {
                 Material material = ToHUtils.matchMaterial(me.getKey());
                 if (material != null) {
                     if (material.getId() == itemId) {
-                        return loadPowerTool(player == null, (ConfigurationSection)me.getValue());
+                        return loadPowerTool(player == null, (ConfigurationSection)me.getValue(), me.getKey());
                     }
                 }
                 else
@@ -87,13 +89,21 @@ public class YamlPowerToolDao implements PowerToolDao {
         return null;
     }
 
-    private PowerTool loadPowerTool(boolean global, ConfigurationSection node) {
+    private PowerTool loadPowerTool(boolean global, ConfigurationSection node, String materialName) {
         if (node != null) {
             PowerTool pt = new PowerTool(global);
             for (PowerToolAction action : PowerToolAction.values()) {
                 String command = node.getString(action.getDisplayName());
-                if (ToHStringUtils.hasText(command))
-                    pt.setCommand(action, command, command.contains(plugin.getPlayerToken()));
+                if (ToHStringUtils.hasText(command)) {
+                    boolean hasPlayerToken = command.contains(plugin.getPlayerToken());
+                    boolean hasAirToken = command.contains(plugin.getYAirToken());
+                    boolean hasLocationToken = command.contains(plugin.getXToken()) || command.contains(plugin.getYToken()) || command.contains(plugin.getZToken()) || hasAirToken;
+                    if (hasPlayerToken && hasLocationToken) {
+                        warn(plugin, BAD_TOKENS_MSG, materialName);
+                        return null;
+                    }
+                    pt.setCommand(action, command, hasPlayerToken, hasLocationToken, hasAirToken);
+                }
             }
             return pt;
         }
@@ -115,7 +125,7 @@ public class YamlPowerToolDao implements PowerToolDao {
 
                 Material material = ToHUtils.matchMaterial(me.getKey());
                 if (material != null) {
-                    PowerTool pt = loadPowerTool(player == null, (ConfigurationSection)me.getValue());
+                    PowerTool pt = loadPowerTool(player == null, (ConfigurationSection)me.getValue(), me.getKey());
                     if (pt != null)
                         powerTools.put(material.getId(), pt);
                 }

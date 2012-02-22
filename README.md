@@ -9,6 +9,12 @@ commands remain until you either log off or you manually clear the binding.
 Bound commands may also include a special player "token," `%p` by default, which
 will be replaced by the name of the player you left-click or right-click on.
 
+As of 0.9.4, bound commands may also include special coordinate tokens: `%x`,
+`%y`, `%z`, and finally `%Y`. These are replaced with the X, Y, and Z
+coordinates of the currently targeted block (up to 100 blocks away!) Note that
+`%Y` (capital-Y) is special in that it is the Y-coordinate of the nearest air
+block directly *above* the targeted block.
+
 ## Commands ##
 
 There's only one command, `/powertool` which may also be abbreviated `/pt`:
