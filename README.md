@@ -89,8 +89,6 @@ Sources may be found on GitHub:
 
 ## To Do ##
 
-*  More substitutions. Perhaps %loc, which would be replaced by the location of
-    the currently targeted block.
 *   Allow setting/clearing global power tools from the command line (for those
     with the proper permission, of course).
 *   Allow players to save player-specific power tools (also permission
