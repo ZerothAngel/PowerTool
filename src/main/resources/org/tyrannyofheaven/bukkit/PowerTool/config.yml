@@ -1,4 +1,4 @@
-config-version: 1
+config-version: 2
 
 player-token: '%p'
 
@@ -9,5 +9,7 @@ y-token: '%y'
 y-air-token: '%Y'
 
 z-token: '%z'
+
+verbose: true
 
 debug: false

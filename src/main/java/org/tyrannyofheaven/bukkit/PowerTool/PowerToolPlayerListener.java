@@ -134,6 +134,8 @@ public class PowerToolPlayerListener implements Listener {
 
     @EventHandler(priority=EventPriority.MONITOR)
     public void onItemHeldChange(PlayerItemHeldEvent event) {
+        if (!plugin.isVerbose()) return;
+
         if (!event.getPlayer().hasPermission("powertool.use")) return;
 
         int itemId = event.getPlayer().getInventory().getItem(event.getNewSlot()).getTypeId();

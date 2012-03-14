@@ -52,6 +52,8 @@ public class PowerToolPlugin extends JavaPlugin {
     
     private static final String DEFAULT_Y_AIR_TOKEN = "%Y";
 
+    private static final boolean DEFAULT_VERBOSE = true;
+
     private static final int MAX_TRACE_DISTANCE = 100;
 
     private final Logger logger = Logger.getLogger(getClass().getName());
@@ -75,6 +77,8 @@ public class PowerToolPlugin extends JavaPlugin {
     private String zToken;
     
     private String yAirToken;
+
+    private boolean verbose;
 
     @Override
     public void onLoad() {
@@ -120,6 +124,7 @@ public class PowerToolPlugin extends JavaPlugin {
         yToken = config.getString("y-token", DEFAULT_Y_TOKEN);
         zToken = config.getString("z-token", DEFAULT_Z_TOKEN);
         yAirToken = config.getString("y-air-token", DEFAULT_Y_AIR_TOKEN);
+        verbose = config.getBoolean("verbose", DEFAULT_VERBOSE);
         boolean debug = config.getBoolean("debug", false);
 
         // Read global powertools
@@ -151,6 +156,10 @@ public class PowerToolPlugin extends JavaPlugin {
     
     public String getYAirToken() {
         return yAirToken;
+    }
+
+    public boolean isVerbose() {
+        return verbose;
     }
 
     PowerTool getPowerTool(Player player, int itemId, boolean create) {

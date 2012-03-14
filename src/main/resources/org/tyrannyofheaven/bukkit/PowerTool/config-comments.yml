@@ -17,5 +17,10 @@ z-token: |
   This string is replaced with the Z-coordinate of the currently targeted
   block.
 
+verbose: |
+  If true, when the player selects an item on their hot bar, they will
+  be reminded if the item is bound to any commands. Set to false to
+  suppress this message.
+
 debug: |
   Enable debug logging.
