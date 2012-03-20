@@ -34,6 +34,7 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 
 public class PowerToolPlayerListener implements Listener {
 
@@ -138,7 +139,10 @@ public class PowerToolPlayerListener implements Listener {
 
         if (!event.getPlayer().hasPermission("powertool.use")) return;
 
-        int itemId = event.getPlayer().getInventory().getItem(event.getNewSlot()).getTypeId();
+        ItemStack itemStack = event.getPlayer().getInventory().getItem(event.getNewSlot());
+        if (itemStack == null) return;
+        
+        int itemId = itemStack.getTypeId();
         
         if (itemId == Material.AIR.getId()) return;
 
