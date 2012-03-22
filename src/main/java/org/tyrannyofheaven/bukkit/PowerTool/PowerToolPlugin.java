@@ -112,8 +112,7 @@ public class PowerToolPlugin extends JavaPlugin {
         (new ToHCommandExecutor<PowerToolPlugin>(this, new Commands(this))).registerCommands();
 
         // Install event listeners
-        (new PowerToolPlayerListener(this)).registerEvents();
-        (new PowerToolEntityListener(this)).registerEvents();
+        getServer().getPluginManager().registerEvents(new PowerToolListener(this), this);
 
         log(this, "%s enabled.", versionInfo.getVersionString());
     }
