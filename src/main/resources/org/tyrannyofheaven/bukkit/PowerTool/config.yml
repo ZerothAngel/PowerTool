@@ -1,4 +1,4 @@
-config-version: 2
+config-version: 3
 
 player-token: '%p'
 
@@ -9,6 +9,17 @@ y-token: '%y'
 y-air-token: '%Y'
 
 z-token: '%z'
+
+options:
+- name: default
+  limit: -1
+- name: group.guest
+  limit: 5
+
+powertools:
+  sulphur:
+    left-click: version
+    right-click: plugins
 
 verbose: true
 

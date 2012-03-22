@@ -35,6 +35,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -124,6 +125,11 @@ public class PowerToolListener implements Listener {
                 }
             }
         }
+    }
+
+    @EventHandler(priority=EventPriority.MONITOR)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        plugin.loadPersistentPowerTools(event.getPlayer());
     }
 
     @EventHandler(priority=EventPriority.MONITOR)

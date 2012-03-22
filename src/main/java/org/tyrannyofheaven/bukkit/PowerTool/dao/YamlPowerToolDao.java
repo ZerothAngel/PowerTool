@@ -91,7 +91,7 @@ public class YamlPowerToolDao implements PowerToolDao {
 
     private PowerTool loadPowerTool(boolean global, ConfigurationSection node, String materialName) {
         if (node != null) {
-            PowerTool pt = new PowerTool(global);
+            PowerTool pt = new PowerTool();
             for (PowerToolAction action : PowerToolAction.values()) {
                 String command = node.getString(action.getDisplayName());
                 if (ToHStringUtils.hasText(command)) {
@@ -167,39 +167,41 @@ public class YamlPowerToolDao implements PowerToolDao {
     @Override
     public void savePowerTool(Player player, int itemId, PowerTool powerTool) {
         ConfigurationSection section = config.getConfigurationSection(getBasePath(player));
-        if (section != null) {
-            Map<String, Object> nodes = section.getValues(false);
+        if (section == null)
+            section = config.createSection(getBasePath(player));
 
-            // Have to iterate since the keys can have many forms... (TODO screaming for a refactoring)
-            for (Map.Entry<String, Object> me : nodes.entrySet()) {
-                if (!(me.getValue() instanceof ConfigurationSection)) {
-                    warn(plugin, NOT_MAP_NODE_MSG, me.getKey());
-                    continue;
+        Map<String, Object> nodes = section.getValues(false);
+
+        // Have to iterate since the keys can have many forms... (TODO screaming for a refactoring)
+        for (Map.Entry<String, Object> me : nodes.entrySet()) {
+            if (!(me.getValue() instanceof ConfigurationSection)) {
+                warn(plugin, NOT_MAP_NODE_MSG, me.getKey());
+                continue;
+            }
+
+            Material material = ToHUtils.matchMaterial(me.getKey());
+            if (material != null) {
+                if (material.getId() == itemId) {
+                    // Remove this node first.
+                    config.set(String.format("%s.%s", getBasePath(player), me.getKey()), null); // FIXME
+                    break;
                 }
-
-                Material material = ToHUtils.matchMaterial(me.getKey());
-                if (material != null) {
-                    if (material.getId() == itemId) {
-                        // Remove this node first.
-                        config.set(String.format("%s.%s", getBasePath(player), me.getKey()), null); // FIXME
-
-                        // Do the actual save.
-                        String materialPath = getMaterialPath(player, itemId);
-                        for (PowerToolAction action : PowerToolAction.values()) {
-                            PowerTool.Command command = powerTool.getCommand(action);
-                            if (command != null) {
-                                config.set(String.format("%s.%s", materialPath, action.getDisplayName()), command.getCommand());
-                            }
-                        }
-                        
-                        // Save
-                        ToHFileUtils.saveConfig(plugin, config, file.getParentFile(), file.getName());
-                    }
-                }
-                else
-                    warn(plugin, UNKNOWN_MATERIAL_MSG, me.getKey());
+            }
+            else
+                warn(plugin, UNKNOWN_MATERIAL_MSG, me.getKey());
+        }
+        
+        // Do the actual save.
+        String materialPath = getMaterialPath(player, itemId);
+        for (PowerToolAction action : PowerToolAction.values()) {
+            PowerTool.Command command = powerTool.getCommand(action);
+            if (command != null) {
+                config.set(String.format("%s.%s", materialPath, action.getDisplayName()), command.getCommand());
             }
         }
+
+        // Save
+        ToHFileUtils.saveConfig(plugin, config, file.getParentFile(), file.getName());
     }
 
 }

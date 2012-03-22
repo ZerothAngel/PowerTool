@@ -24,15 +24,7 @@ public class PowerTool {
 
     private final Map<PowerToolAction, Command> commandMap = new HashMap<PowerToolAction, Command>();
 
-    private final boolean global;
-
-    public PowerTool() {
-        this(false);
-    }
-
-    public PowerTool(boolean global) {
-        this.global = global;
-    }
+    private boolean global;
 
     public Command getCommand(PowerToolAction action) {
         if (action == null)
@@ -60,6 +52,10 @@ public class PowerTool {
 
     public boolean isGlobal() {
         return global;
+    }
+
+    public void setGlobal(boolean global) {
+        this.global = global;
     }
 
     public static class Command {

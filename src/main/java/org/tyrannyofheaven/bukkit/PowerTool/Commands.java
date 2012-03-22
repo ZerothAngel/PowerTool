@@ -15,149 +15,35 @@
  */
 package org.tyrannyofheaven.bukkit.PowerTool;
 
-import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
-import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
-import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
-import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requirePermission;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.entity.Player;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
-import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 
 public class Commands {
 
-    private static final String MODIFY_GLOBAL_ERROR_MSG = "`rCannot modify a global power tool!";
-
-    private final PowerToolPlugin plugin;
-
-    private final List<String> disallowedCommands;
+    private final SubCommands subCommands;
 
     Commands(PowerToolPlugin plugin) {
-        this.plugin = plugin;
-
-        // Commands not allowed
-        PluginCommand command = plugin.getCommand("powertool");
-        disallowedCommands = new ArrayList<String>(1 + command.getAliases().size());
-        disallowedCommands.add(command.getName());
-        disallowedCommands.addAll(command.getAliases());
+        subCommands = new SubCommands(plugin);
     }
 
-    @Command(value="powertool", description="Associate a command with the current item", varargs="command")
-    @Require("powertool.use")
-    public void powertool(CommandSender sender, String[] args, @Option({"-r", "--right"}) Boolean right, @Option({"-c", "--clear"}) Boolean clear, @Option({"-h", "--help"}) Boolean help, HelpBuilder helpBuilder,
-            @Option({"-R", "--reload"}) Boolean reload) {
-        if (reload != null && reload) {
-            requirePermission(sender, "powertool.reload");
-            plugin.reload();
-            sendMessage(sender, colorize("`yconfig.yml reloaded."));
-            return;
-        }
-
-        // Doesn't make sense for non-players
-        if (!(sender instanceof Player)) {
-            sendMessage(sender, colorize("`rSilly %s, power tools are for players!"), sender.getName());
-            return;
-        }
-
-        // Show help, if requested
-        if (help != null && help) {
-            helpBuilder.withCommandSender(sender)
-                .withHandler(this)
-                .forSiblingCommand("powertool")
-                .show();
-            return;
-        }
-
-        Player player = (Player)sender;
-
-        // Get item in hand
-        int itemId = player.getItemInHand().getTypeId();
-        if (itemId == Material.AIR.getId()) {
-            sendMessage(player, colorize("`rYou aren't holding anything!"));
-            return;
-        }
-
-        if (clear != null && clear) {
-            // Clear all actions
-            if (plugin.removePowerTool(player, itemId))
-                sendMessage(player, colorize("`yPower tool cleared."));
-            else
-                sendMessage(player, colorize(MODIFY_GLOBAL_ERROR_MSG));
-            return;
-        }
-
-        // Determine action
-        PowerToolAction action = PowerToolAction.LEFT_CLICK;
-        if (right != null && right)
-            action = PowerToolAction.RIGHT_CLICK;
-        
+    @Command("powertool")
+    @Require({ "powertool.use", "powertool.reload" })
+    public SubCommands powertool(CommandSender sender, String[] args, HelpBuilder helpBuilder) {
         if (args.length == 0) {
-            // Clear the command
-            PowerTool pt = plugin.getPowerTool(player, itemId, false);
-            if (pt != null) {
-                if (pt.isGlobal()) {
-                    // TODO admin permissions?
-                    sendMessage(player, colorize(MODIFY_GLOBAL_ERROR_MSG));
-                    return;
-                }
-                pt.clearCommand(action);
-                if (pt.isEmpty())
-                    plugin.removePowerTool(player, itemId);
-            }
-            sendMessage(player, colorize("`yPower tool (`Y%s`y) cleared."), action.getDisplayName());
-            
+            helpBuilder.withCommandSender(sender)
+                .withHandler(subCommands)
+                .forCommand("left")
+                .forCommand("right")
+                .forCommand("clear")
+                .forCommand("list")
+                .forCommand("reload")
+                .show();
+            return null;
         }
-        else {
-            // Validate command
-            for (String name : disallowedCommands) {
-                if (name.equalsIgnoreCase(args[0])) {
-                    sendMessage(player, colorize("`rRecursion not allowed!"));
-                    return;
-                }
-            }
-
-            // Check for tokens
-            boolean hasPlayerToken = false;
-            boolean hasLocationToken = false;
-            boolean hasAirToken = false;
-            for (String arg : args) {
-                if (arg.contains(plugin.getPlayerToken())) {
-                    hasPlayerToken = true;
-                }
-                // FIXME gotta be a better way to do this
-                else if (arg.contains(plugin.getXToken()) ||
-                        arg.contains(plugin.getYToken()) ||
-                        arg.contains(plugin.getZToken())) {
-                    hasLocationToken = true;
-                }
-                else if (arg.contains(plugin.getYAirToken())) {
-                    hasLocationToken = true;
-                    hasAirToken = true;
-                }
-            }
-            if (hasPlayerToken && hasLocationToken) {
-                sendMessage(player, colorize("`rCannot use player and coordinate tokens simultaneously!"));
-                return;
-            }
-
-            // Set the command
-            PowerTool pt = plugin.getPowerTool(player, itemId, true);
-            if (pt.isGlobal()) {
-                // TODO admin permissions?
-                sendMessage(player, colorize(MODIFY_GLOBAL_ERROR_MSG));
-                return;
-            }
-            pt.setCommand(action, delimitedString(" ", (Object[])args), hasPlayerToken, hasLocationToken, hasAirToken);
-            sendMessage(player, colorize("`yPower tool (`Y%s`y) set."), action.getDisplayName());
-        }
+        
+        return subCommands;
     }
 
 }

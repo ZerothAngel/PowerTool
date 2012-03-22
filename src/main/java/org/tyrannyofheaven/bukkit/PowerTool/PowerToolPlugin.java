@@ -18,10 +18,15 @@ package org.tyrannyofheaven.bukkit.PowerTool;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.error;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.warn;
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -78,6 +83,10 @@ public class PowerToolPlugin extends JavaPlugin {
     
     private String yAirToken;
 
+    private final List<GroupOption> groupOptions = new ArrayList<GroupOption>();
+
+    private GroupOption defaultGroupOption;
+
     private boolean verbose;
 
     @Override
@@ -118,19 +127,60 @@ public class PowerToolPlugin extends JavaPlugin {
     }
 
     private void readConfig() {
+        logger.setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
+
         playerToken = config.getString("player-token", DEFAULT_PLAYER_TOKEN);
         xToken = config.getString("x-token", DEFAULT_X_TOKEN);
         yToken = config.getString("y-token", DEFAULT_Y_TOKEN);
         zToken = config.getString("z-token", DEFAULT_Z_TOKEN);
         yAirToken = config.getString("y-air-token", DEFAULT_Y_AIR_TOKEN);
         verbose = config.getBoolean("verbose", DEFAULT_VERBOSE);
-        boolean debug = config.getBoolean("debug", false);
+
+        // Group options
+        groupOptions.clear();
+        defaultGroupOption = new GroupOption("default");
+        List<?> opts = config.getList("options");
+        if (opts == null) opts = Collections.emptyList();
+        for (Object o : opts) {
+            if (o instanceof Map<?, ?>) {
+                Map<?, ?> opt = (Map<?, ?>)o;
+                Object nameObj = opt.get("name");
+                if (nameObj == null) {
+                    warn(this, "Missing name in options section");
+                    continue;
+                }
+                String name = nameObj.toString();
+                
+                GroupOption groupOption = new GroupOption(name);
+
+                Object limitObj = opt.get("limit");
+                if (!(limitObj instanceof Number)) {
+                    warn(this, "Limit for %s in options section must be a number; defaulting to -1", name);
+                }
+                else {
+                    groupOption.setLimit(((Number)limitObj).intValue());
+                }
+                
+                if ("default".equalsIgnoreCase(name)) {
+                    defaultGroupOption = groupOption;
+                }
+                else
+                    groupOptions.add(groupOption);
+            }
+            else
+                warn(this, "options section must be a list of maps");
+        }
+        debug(this, "defaultGroupOption = %s", defaultGroupOption);
+        debug(this, "groupOptions = %s", groupOptions);
 
         // Read global powertools
         globalPowerTools.clear();
-        globalPowerTools.putAll(getDao().loadPowerTools(null));
-
-        logger.setLevel(debug ? Level.FINE : null);
+        Map<Integer, PowerTool> powertools = getDao().loadPowerTools(null);
+        for (PowerTool pt : powertools.values()) {
+            // Set global flag
+            pt.setGlobal(true);
+        }
+        globalPowerTools.putAll(powertools);
     }
 
     PowerToolDao getDao() {
@@ -196,6 +246,22 @@ public class PowerToolPlugin extends JavaPlugin {
         if (ps != null)
             ps.removePowerTool(itemId);
         return true;
+    }
+
+    boolean clearPowerTools(Player player) {
+        PlayerState ps = getPlayerState(player, false);
+        if (ps != null) {
+            boolean empty = ps.getPowerTools().isEmpty();
+            ps.getPowerTools().clear();
+            return !empty;
+        }
+        return false;
+    }
+
+    Map<Integer, PowerTool> getPowerTools(Player player) {
+        PlayerState ps = getPlayerState(player, false);
+        if (ps == null) return Collections.emptyMap();
+        return ps.getPowerTools();
     }
 
     void forgetPlayer(Player player) {
@@ -268,9 +334,101 @@ public class PowerToolPlugin extends JavaPlugin {
         return material.name().toLowerCase().replaceAll("_", "");
     }
 
+    void savePersistentPowerTool(Player player, int itemId, PowerTool powerTool) {
+        File playerConfigFile = getPlayerConfigFile(player);
+        if (playerConfigFile == null) return;
+
+        PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile);
+
+        // Since each player has their own file, save at the global scope.
+        debug(this, "Saving persistent power tool (%d) for %s", itemId, player.getName());
+        playerDao.savePowerTool(null, itemId, powerTool);
+    }
+
+    void removePersistentPowerTool(Player player, int itemId) {
+        File playerConfigFile = getPlayerConfigFile(player);
+        if (playerConfigFile == null) return;
+
+        PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile);
+        
+        debug(this, "Removing persistent power tool (%d) for %s", itemId, player.getName());
+        playerDao.removePowerTool(null, itemId);
+    }
+
+    void clearPersistentPowerTools(Player player) {
+        File playerConfigFile = getPlayerConfigFile(player);
+        if (playerConfigFile == null) return;
+        
+        // Just be lazy and delete
+        debug(this, "Clearing persistent power tools for %s", player.getName());
+        if (playerConfigFile.exists() && !playerConfigFile.delete()) {
+            error(this, "Unable to delete player configuration file: %s", playerConfigFile);
+        }
+    }
+
+    void loadPersistentPowerTools(Player player) {
+        File playerConfigFile = getPlayerConfigFile(player);
+        if (playerConfigFile == null) return;
+        
+        if (playerConfigFile.exists()) {
+            debug(this, "Loading persistent power tools for %s", player.getName());
+            PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile);
+            Map<Integer, PowerTool> powerTools = playerDao.loadPowerTools(null);
+            if (!powerTools.isEmpty()) {
+                // Load into player state
+                PlayerState ps = getPlayerState(player, true);
+                ps.getPowerTools().clear();
+                ps.getPowerTools().putAll(powerTools);
+            }
+        }
+    }
+
+    private File getPlayerConfigFile(Player player) {
+        File playerConfigDir = new File(getDataFolder(), "players");
+        if (!playerConfigDir.exists() && !playerConfigDir.mkdirs()) {
+            error(this, "Unable to create player configuration directory: %s", playerConfigDir);
+            return null;
+        }
+
+        return new File(playerConfigDir, player.getName() + ".yml");
+    }
+
+    boolean isOverLimit(Player player) {
+        // Figure out player's group
+        GroupOption groupOption = null;
+        for (GroupOption go : groupOptions) {
+            // Check if it's explicitly set so we avoid defaulted values
+            if (player.isPermissionSet(go.getName()) && player.hasPermission(go.getName())) {
+                groupOption = go;
+                break;
+            }
+        }
+
+        // Use default, if necessary
+        if (groupOption == null)
+            groupOption = defaultGroupOption;
+
+        debug(this, "Player %s using group option %s", player.getName(), groupOption);
+
+        // Count the player's current number of power tools
+        int current;
+        PlayerState ps = getPlayerState(player, false);
+        if (ps == null)
+            current = 0;
+        else
+            current = ps.getPowerTools().size();
+
+        int limit = groupOption.getLimit();
+        return limit > -1 && current >= limit;
+    }
+
     private static class PlayerState {
 
         private final Map<Integer, PowerTool> powerTools = new HashMap<Integer, PowerTool>();
+
+        public Map<Integer, PowerTool> getPowerTools() {
+            return powerTools;
+        }
 
         public PowerTool getPowerTool(int itemId, boolean create) {
             PowerTool pt = powerTools.get(itemId);
@@ -285,6 +443,38 @@ public class PowerToolPlugin extends JavaPlugin {
         public void removePowerTool(int itemId) {
             powerTools.remove(itemId);
         }
+        
+    }
+
+    private static class GroupOption {
+
+        private final String name;
+
+        private int limit = -1;
+        
+        private GroupOption(String name) {
+            if (!hasText(name))
+                throw new IllegalArgumentException("name must have a value");
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getLimit() {
+            return limit;
+        }
+
+        public void setLimit(int limit) {
+            this.limit = limit;
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("GroupOption[name=%s, limit=%d]", getName(), getLimit());
+        }
+
     }
 
 }

@@ -6,15 +6,13 @@ author: ZerothAngel
 
 commands:
   powertool:
-    description: Set or clear a powertool
-    aliases: pt
+    description: Top-level command for PowerTool
+    aliases: [ptool, pt]
 
 permissions:
   powertool.use:
-    description: Allows use of the /powertool command
+    description: Allows use of the use of power tools
     default: op
   powertool.reload:
-    description: Allows use of /powertool -R
+    description: Allows use of /powertool reload
     default: op
-    children:
-      powertool.use: true
