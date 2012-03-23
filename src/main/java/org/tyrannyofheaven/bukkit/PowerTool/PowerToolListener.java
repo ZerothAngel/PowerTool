@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -30,14 +31,12 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 
 public class PowerToolListener implements Listener {
 
@@ -75,48 +74,20 @@ public class PowerToolListener implements Listener {
             PowerToolAction action = actionMap.get(event.getAction());
             if (action != null) {
                 PowerTool.Command command = pt.getCommand(action);
-                if (command != null && !command.hasPlayerToken()) {
+                if (command != null) {
                     String commandString = command.getCommand();
-                    if (command.hasLocationToken()) {
+                    if (command.hasPlayerToken()) {
+                        Player targetedPlayer = findPlayerInSight(event.getPlayer());
+                        if (targetedPlayer != null) {
+                            debug(plugin, "%s %sed %s", event.getPlayer().getName(), action.getDisplayName(), targetedPlayer.getName());
+                            commandString = commandString.replace(plugin.getPlayerToken(), targetedPlayer.getName());
+                        }
+                        else {
+                            commandString = null;
+                        }
+                    }
+                    else if (command.hasLocationToken()) {
                         commandString = plugin.substituteLocation(event.getPlayer(), event.getClickedBlock(), commandString, command.hasAirToken());
-                    }
-                    if (commandString != null) {
-                        plugin.execute(event.getPlayer(), commandString);
-                        event.setCancelled(true);
-                    }
-                }
-            }
-        }
-    }
-
-    @EventHandler(priority=EventPriority.NORMAL)
-    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
-        if (!event.getPlayer().hasPermission("powertool.use")) return;
-
-        int itemId = event.getPlayer().getItemInHand().getTypeId();
-        
-        if (itemId == Material.AIR.getId()) return;
-        
-        PowerTool pt = plugin.getPowerTool(event.getPlayer(), itemId, false);
-        if (pt != null) {
-            PowerTool.Command command = pt.getCommand(PowerToolAction.RIGHT_CLICK);
-            if (command != null) {
-                String commandString = null;
-                
-                if (command.hasPlayerToken()) {
-                    // Player is required, only execute if player was target
-                    Entity entity = event.getRightClicked();
-                    if (entity instanceof Player) {
-                        Player clicked = (Player)entity;
-                        debug(plugin, "%s right-clicked %s", event.getPlayer().getName(), clicked.getName());
-    
-                        commandString = command.getCommand().replace(plugin.getPlayerToken(), clicked.getName());
-                    }
-                }
-                
-                if (commandString != null) {
-                    if (command.hasLocationToken()) {
-                        commandString = plugin.substituteLocation(event.getPlayer(), null, commandString, command.hasAirToken());
                     }
                     if (commandString != null) {
                         plugin.execute(event.getPlayer(), commandString);
@@ -168,52 +139,61 @@ public class PowerToolListener implements Listener {
         }
     }
 
-    @EventHandler(priority=EventPriority.NORMAL)
-    public void onEntityDamage(EntityDamageEvent event) {
-        if (event instanceof EntityDamageByEntityEvent) {
-            EntityDamageByEntityEvent e = (EntityDamageByEntityEvent)event;
-            if (e.getDamager() instanceof Player) {
-                Player attacker = (Player)e.getDamager();
-                
-                if (!attacker.hasPermission("powertool.use")) return;
+    // Returns the closest player that the given player is looking at.
+    // Does this by extending a cylinder from the given player's eyes out to
+    // 100-blocks. The cylinder has a radius of sqrt(1/2). For each player
+    // within 100 blocks, 2 points are tested: location + .5Y and location +
+    // 1.5Y (basically, the Y-midpoints of a player's bottom block and top
+    // block).
+    // Math voodoo provided by:
+    // http://www.flipcode.com/archives/Fast_Point-In-Cylinder_Test.shtml
+    private Player findPlayerInSight(Player player) {
+        Location eyeLocation = player.getEyeLocation();
+        Vector origin = eyeLocation.toVector();
+        Vector end = eyeLocation.getDirection().multiply(PowerToolPlugin.MAX_TRACE_DISTANCE);
+        
+        final double lengthSquared = Math.pow(PowerToolPlugin.MAX_TRACE_DISTANCE, 2); // length of cylinder squared
+        final double radiusSquared = 0.5; // cylinder radius of 1/2 sqrt(2). Basically from block midpoint to a corner.
 
-                int itemId = attacker.getItemInHand().getTypeId();
-                
-                if (itemId == Material.AIR.getId()) return;
-                
-                PowerTool pt = plugin.getPowerTool(attacker, itemId, false);
-                if (pt != null) {
-                    PowerTool.Command command = pt.getCommand(PowerToolAction.LEFT_CLICK);
-                    if (command != null) {
-                        String commandString = null;
-                        
-                        if (command.hasPlayerToken()) {
-                            // Player target required
-                            if (e.getEntity() instanceof Player) {
-                                Player victim = (Player)e.getEntity();
-                                debug(plugin, "%s left-clicked %s", attacker.getName(), victim.getName());
-                                
-                                commandString = command.getCommand().replace(plugin.getPlayerToken(), victim.getName());
-                            }
-                        }
-                        else {
-                            // A left-click is a left-click
-                            commandString = command.getCommand();
-                        }
-                        
-                        if (commandString != null) {
-                            if (command.hasLocationToken()) {
-                                commandString = plugin.substituteLocation(attacker, null, commandString, command.hasAirToken());
-                            }
-                            if (commandString != null) {
-                                plugin.execute(attacker, commandString);
-                                event.setCancelled(true);
-                            }
-                        }
-                    }
+        Player closest = null;
+        double closestDistance = Double.MAX_VALUE;
+
+        // FIXME I feel like this call can be improved by limiting the bounding box...
+        for (Entity e : player.getNearbyEntities(PowerToolPlugin.MAX_TRACE_DISTANCE, PowerToolPlugin.MAX_TRACE_DISTANCE, PowerToolPlugin.MAX_TRACE_DISTANCE)) {
+            if (!(e instanceof Player)) continue; // Only care about Players
+
+            Player other = (Player)e;
+            Location otherLoc = other.getLocation();
+            // Compare against two points: Y-midpoint of bottom block, Y-midpoint of top block
+            // This assumes players are 2 blocks high...
+            Vector otherVec1 = new Vector(otherLoc.getX(), otherLoc.getY() + 0.5, otherLoc.getZ());
+            Vector otherVec2 = new Vector(otherLoc.getX(), otherLoc.getY() + 1.5, otherLoc.getZ());
+            // Vector from origin
+            otherVec1.subtract(origin);
+            otherVec2.subtract(origin);
+
+            double dot1 = end.dot(otherVec1);
+            double dot2 = end.dot(otherVec2);
+            if ((dot1 < 0.0 || dot1 > lengthSquared) && (dot2 < 0.0 || dot2 > lengthSquared)) {
+                // Beyond end caps of cylinder
+                continue;
+            }
+            else {
+                double distanceSquared1 = otherVec1.lengthSquared() - dot1 * dot1 / lengthSquared;
+                double distanceSquared2 = otherVec2.lengthSquared() - dot2 * dot2 / lengthSquared;
+                if (distanceSquared1 > radiusSquared && distanceSquared2 > radiusSquared) continue; // Outside cylinder
+
+                // Player is within crosshairs
+                // If they're closer than the current closest, remember them
+                double distanceSquared = origin.distanceSquared(otherLoc.toVector());
+                if (distanceSquared < closestDistance) {
+                    closest = other;
+                    closestDistance = distanceSquared;
                 }
             }
         }
+        
+        return closest;
     }
 
 }

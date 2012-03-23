@@ -59,7 +59,7 @@ public class PowerToolPlugin extends JavaPlugin {
 
     private static final boolean DEFAULT_VERBOSE = true;
 
-    private static final int MAX_TRACE_DISTANCE = 100;
+    public static final int MAX_TRACE_DISTANCE = 100;
 
     private final Logger logger = Logger.getLogger(getClass().getName());
 
