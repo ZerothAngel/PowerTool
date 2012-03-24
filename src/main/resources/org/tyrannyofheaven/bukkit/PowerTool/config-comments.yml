@@ -17,20 +17,28 @@ z-token: |
   This string is replaced with the Z-coordinate of the currently targeted
   block.
 
-limits: |
+options: |
   Per-group options. Groups are determined by permissions. If a player has
   the given permission, they are considered part of that group and will have
-  the corresponding power tool options. A limit of -1 means unlimited.
-  "default" is special and is used if the player has none of the given
+  the corresponding power tool options. The general form is:
+
+    - name: some.permission
+      limit: 5
+
+  A limit of -1 means unlimited.
+
+  The name "default" is special and is used if the player has none of the given
   permissions. Only the first permission matched is used.
 
 powertools: |
-  Global power tools, useable by anyone with the powertool.use permission.
+  Global power tools, usable by anyone with the powertool.use permission.
   The general form is:
 
     item_id_or_name:
       left-click: command-to-execute-when-left-clicked
       right-click: command-to-execute-when-right-clicked
+
+  "left-click" or "right-click" may be omitted.
 
 verbose: |
   If true, when the player selects an item on their hot bar, they will
