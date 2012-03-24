@@ -150,11 +150,8 @@ public class PowerToolListener implements Listener {
     private Player findPlayerInSight(Player player) {
         Location eyeLocation = player.getEyeLocation();
         Vector origin = eyeLocation.toVector();
-        Vector end = eyeLocation.getDirection().multiply(PowerToolPlugin.MAX_TRACE_DISTANCE);
+        Vector direction = eyeLocation.getDirection().multiply(PowerToolPlugin.MAX_TRACE_DISTANCE);
         
-        final double lengthSquared = Math.pow(PowerToolPlugin.MAX_TRACE_DISTANCE, 2); // length of cylinder squared
-        final double radiusSquared = 0.5; // cylinder radius of 1/2 sqrt(2). Basically from block midpoint to a corner.
-
         Player closest = null;
         double closestDistance = Double.MAX_VALUE;
 
@@ -164,25 +161,12 @@ public class PowerToolListener implements Listener {
 
             Player other = (Player)e;
             Location otherLoc = other.getLocation();
-            // Compare against two points: Y-midpoint of bottom block, Y-midpoint of top block
-            // This assumes players are 2 blocks high...
-            Vector otherVec1 = new Vector(otherLoc.getX(), otherLoc.getY() + 0.5, otherLoc.getZ());
-            Vector otherVec2 = new Vector(otherLoc.getX(), otherLoc.getY() + 1.5, otherLoc.getZ());
-            // Vector from origin
-            otherVec1.subtract(origin);
-            otherVec2.subtract(origin);
 
-            double dot1 = end.dot(otherVec1);
-            double dot2 = end.dot(otherVec2);
-            if ((dot1 < 0.0 || dot1 > lengthSquared) && (dot2 < 0.0 || dot2 > lengthSquared)) {
-                // Beyond end caps of cylinder
-                continue;
-            }
-            else {
-                double distanceSquared1 = otherVec1.lengthSquared() - dot1 * dot1 / lengthSquared;
-                double distanceSquared2 = otherVec2.lengthSquared() - dot2 * dot2 / lengthSquared;
-                if (distanceSquared1 > radiusSquared && distanceSquared2 > radiusSquared) continue; // Outside cylinder
+            // Determine bounds of 1x2x1 AABB
+            Vector minB = new Vector(otherLoc.getX() - 0.5, otherLoc.getY(), otherLoc.getZ() - 0.5);
+            Vector maxB = new Vector(otherLoc.getX() + 0.5, otherLoc.getY() + 2.0, otherLoc.getZ() + 0.5);
 
+            if (Utils.hitBoundingBox(minB, maxB, origin, direction, null)) {
                 // Player is within crosshairs
                 // If they're closer than the current closest, remember them
                 double distanceSquared = origin.distanceSquared(otherLoc.toVector());
