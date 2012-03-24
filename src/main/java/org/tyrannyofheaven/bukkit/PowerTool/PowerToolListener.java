@@ -62,6 +62,7 @@ public class PowerToolListener implements Listener {
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (!event.getPlayer().hasPermission("powertool.use")) return;
+        if (!plugin.getEnabled(event.getPlayer())) return;
 
         // NB: Don't care if it's canceled or not.
         // Interaction will be canceled if it doesn't hit a block, which is
@@ -113,6 +114,7 @@ public class PowerToolListener implements Listener {
         if (!plugin.isVerbose()) return;
 
         if (!event.getPlayer().hasPermission("powertool.use")) return;
+        if (!plugin.getEnabled(event.getPlayer())) return;
 
         ItemStack itemStack = event.getPlayer().getInventory().getItem(event.getNewSlot());
         if (itemStack == null) return;

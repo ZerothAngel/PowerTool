@@ -35,7 +35,11 @@ or `/ptool`:
 *   `/powertool clear` &mdash; Clears all bound commands from the current item.
 *   `/powertool clear <item-id-or-name>` &mdash; Clears all bound commands from the
     specified item.
-*   `/powertool clear -a` &mdash; Clears all bound commands form all items.
+*   `/powertool clear -a` &mdash; Clears all bound commands from all items.
+*   `/powertool on` &mdash; Enable power tools for this session (default is on).
+*   `/powertool off` &mdash; Disable power tools for this session.
+*   `/powertool toggle` &mdash; Toggle power tools availability. Can also be
+    abbreviated as `/powertool t`.
 *   `/powertool reload` &mdash; Re-reads config.yml.
 
 ## Permissions ##

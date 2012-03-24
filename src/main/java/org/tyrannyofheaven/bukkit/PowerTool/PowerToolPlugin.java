@@ -264,6 +264,25 @@ public class PowerToolPlugin extends JavaPlugin {
         return ps.getPowerTools();
     }
 
+    boolean getEnabled(Player player) {
+        PlayerState ps = getPlayerState(player, false);
+        if (ps != null)
+            return ps.isEnabled();
+        return true; // so we check global power tools
+    }
+
+    void setEnabled(Player player, boolean enabled) {
+        PlayerState ps = getPlayerState(player, true);
+        ps.setEnabled(enabled);
+    }
+
+    boolean toggleEnabled(Player player) {
+        PlayerState ps = getPlayerState(player, true);
+        boolean enabled = !ps.isEnabled(); // toggle
+        ps.setEnabled(enabled);
+        return enabled;
+    }
+
     void forgetPlayer(Player player) {
         synchronized (playerStates) {
             playerStates.remove(player.getName());
@@ -426,6 +445,8 @@ public class PowerToolPlugin extends JavaPlugin {
 
         private final Map<Integer, PowerTool> powerTools = new HashMap<Integer, PowerTool>();
 
+        private boolean enabled = true;
+
         public Map<Integer, PowerTool> getPowerTools() {
             return powerTools;
         }
@@ -442,6 +463,14 @@ public class PowerToolPlugin extends JavaPlugin {
 
         public void removePowerTool(int itemId) {
             powerTools.remove(itemId);
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
         }
         
     }

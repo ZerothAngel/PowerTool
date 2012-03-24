@@ -170,6 +170,40 @@ public class SubCommands {
         }
     }
 
+    @Command(value="on", description="Turn power tools on for this session")
+    @Require("powertool.use")
+    public void enable(CommandSender sender) {
+        Player player = playerCheck(sender);
+        if (player == null) return;
+        
+        plugin.setEnabled(player, true);
+        sendEnableMessage(player, true);
+    }
+
+    @Command(value="off", description="Turn power tools off for this session")
+    @Require("powertool.use")
+    public void disable(CommandSender sender) {
+        Player player = playerCheck(sender);
+        if (player == null) return;
+        
+        plugin.setEnabled(player, false);
+        sendEnableMessage(player, false);
+    }
+
+    @Command(value={ "toggle", "t" }, description="Toggle power tools availability")
+    @Require("powertool.use")
+    public void toggle(CommandSender sender) {
+        Player player = playerCheck(sender);
+        if (player == null) return;
+        
+        boolean enabled = plugin.toggleEnabled(player);
+        sendEnableMessage(player, enabled);
+    }
+
+    private void sendEnableMessage(Player player, boolean enabled) {
+        sendMessage(player, colorize("`yPower tools %s`y."), enabled ? colorize("`genabled") : colorize("`rdisabled"));
+    }
+
     @Command(value="reload", description="Re-read config.yml")
     @Require("powertool.reload")
     public void reload(CommandSender sender) {

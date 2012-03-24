@@ -38,6 +38,9 @@ public class Commands {
                 .forCommand("right")
                 .forCommand("clear")
                 .forCommand("list")
+                .forCommand("on")
+                .forCommand("off")
+                .forCommand("toggle")
                 .forCommand("reload")
                 .show();
             return null;
