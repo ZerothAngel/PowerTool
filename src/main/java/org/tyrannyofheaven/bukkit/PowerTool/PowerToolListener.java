@@ -91,8 +91,8 @@ public class PowerToolListener implements Listener {
                     }
                     if (commandString != null) {
                         plugin.execute(event.getPlayer(), commandString);
-                        event.setCancelled(true);
                     }
+                    event.setCancelled(true);
                 }
             }
         }
