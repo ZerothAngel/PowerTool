@@ -124,6 +124,10 @@ public class PowerToolPlugin extends JavaPlugin {
         // Install event listeners
         getServer().getPluginManager().registerEvents(new PowerToolListener(this), this);
 
+        // Load persistent power tools for anyone currently online
+        for (Player player : getServer().getOnlinePlayers())
+            loadPersistentPowerTools(player);
+
         log(this, "%s enabled.", versionInfo.getVersionString());
     }
 
