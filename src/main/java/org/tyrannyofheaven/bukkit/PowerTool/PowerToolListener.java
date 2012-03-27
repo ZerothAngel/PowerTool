@@ -31,6 +31,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -76,22 +77,81 @@ public class PowerToolListener implements Listener {
             if (action != null) {
                 PowerTool.Command command = pt.getCommand(action);
                 if (command != null) {
-                    String commandString = command.getCommand();
-                    if (command.hasPlayerToken()) {
-                        Player targetedPlayer = findPlayerInSight(event.getPlayer());
-                        if (targetedPlayer != null) {
-                            debug(plugin, "%s %sed %s", event.getPlayer().getName(), action.getDisplayName(), targetedPlayer.getName());
-                            commandString = commandString.replace(plugin.getPlayerToken(), targetedPlayer.getName());
+                    debug(plugin, "Power tool candidate: %s", command);
+                    if (plugin.shouldExecute(event.getPlayer())) {
+                        String commandString = command.getCommand();
+                        if (command.hasPlayerToken()) {
+                            Player targetedPlayer = findPlayerInSight(event.getPlayer());
+                            if (targetedPlayer != null) {
+                                debug(plugin, "%s %sed %s", event.getPlayer().getName(), action.getDisplayName(), targetedPlayer.getName());
+                                commandString = commandString.replace(plugin.getPlayerToken(), targetedPlayer.getName());
+                            }
+                            else {
+                                debug(plugin, "No player target");
+                                commandString = null;
+                            }
+                        }
+                        else if (command.hasLocationToken()) {
+                            commandString = plugin.substituteLocation(event.getPlayer(), event.getClickedBlock(), commandString, command.hasAirToken());
+                        }
+                        if (commandString != null) {
+                            plugin.execute(event.getPlayer(), commandString);
+                        }
+                    }
+                    else {
+                        debug(plugin, "Already executed");
+                    }
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority=EventPriority.NORMAL)
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        if (event.getDamager() instanceof Player) {
+            Player attacker = (Player)event.getDamager();
+
+            if (!attacker.hasPermission("powertool.use")) return;
+            if (!plugin.getEnabled(attacker)) return;
+
+            int itemId = attacker.getItemInHand().getTypeId();
+
+            if (itemId == Material.AIR.getId()) return;
+
+            PowerTool pt = plugin.getPowerTool(attacker, itemId, false);
+            if (pt != null) {
+                PowerTool.Command command = pt.getCommand(PowerToolAction.LEFT_CLICK);
+                if (command != null) {
+                    debug(plugin, "Power tool candidate*: %s", command);
+                    if (plugin.shouldExecute(attacker)) {
+                        String commandString = null;
+
+                        if (command.hasPlayerToken()) {
+                            // Player target required
+                            if (event.getEntity() instanceof Player) {
+                                Player victim = (Player)event.getEntity();
+                                debug(plugin, "%s left-clicked* %s", attacker.getName(), victim.getName());
+
+                                commandString = command.getCommand().replace(plugin.getPlayerToken(), victim.getName());
+                            }
                         }
                         else {
-                            commandString = null;
+                            // A left-click is a left-click
+                            commandString = command.getCommand();
+                        }
+
+                        if (commandString != null) {
+                            if (command.hasLocationToken()) {
+                                commandString = plugin.substituteLocation(attacker, null, commandString, command.hasAirToken());
+                            }
+                            if (commandString != null) {
+                                plugin.execute(attacker, commandString);
+                            }
                         }
                     }
-                    else if (command.hasLocationToken()) {
-                        commandString = plugin.substituteLocation(event.getPlayer(), event.getClickedBlock(), commandString, command.hasAirToken());
-                    }
-                    if (commandString != null) {
-                        plugin.execute(event.getPlayer(), commandString);
+                    else {
+                        debug(plugin, "Already executed*");
                     }
                     event.setCancelled(true);
                 }

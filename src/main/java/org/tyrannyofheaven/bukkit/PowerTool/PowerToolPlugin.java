@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -283,6 +284,15 @@ public class PowerToolPlugin extends JavaPlugin {
         return enabled;
     }
 
+    boolean shouldExecute(Player player) {
+        PlayerState ps = getPlayerState(player, false);
+        if (ps == null) return true; // Kinda strange, but eh...
+        World world = player.getWorld();
+        if (world.getName().equals(ps.getLastExecuteWorld()) && world.getTime() == ps.getLastExecuteTime())
+            return false; // Already executed this power tool during this tick
+        return true;
+    }
+
     void forgetPlayer(Player player) {
         synchronized (playerStates) {
             playerStates.remove(player.getName());
@@ -297,6 +307,10 @@ public class PowerToolPlugin extends JavaPlugin {
         catch (CommandException e) {
             error(this, "Execution failed: %s", commandString, e);
         }
+        PlayerState ps = getPlayerState(player, true);
+        World world = player.getWorld();
+        ps.setLastExecuteWorld(world.getName());
+        ps.setLastExecuteTime(world.getTime());
     }
 
     // Performs coordinate token substitutions.
@@ -447,6 +461,10 @@ public class PowerToolPlugin extends JavaPlugin {
 
         private boolean enabled = true;
 
+        private String lastExecuteWorld;
+
+        private long lastExecuteTime;
+
         public Map<Integer, PowerTool> getPowerTools() {
             return powerTools;
         }
@@ -471,6 +489,22 @@ public class PowerToolPlugin extends JavaPlugin {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+
+        public String getLastExecuteWorld() {
+            return lastExecuteWorld;
+        }
+
+        public void setLastExecuteWorld(String lastExecuteWorld) {
+            this.lastExecuteWorld = lastExecuteWorld;
+        }
+
+        public long getLastExecuteTime() {
+            return lastExecuteTime;
+        }
+
+        public void setLastExecuteTime(long lastExecuteTime) {
+            this.lastExecuteTime = lastExecuteTime;
         }
         
     }
