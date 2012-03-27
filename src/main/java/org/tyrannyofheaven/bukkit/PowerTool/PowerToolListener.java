@@ -201,14 +201,8 @@ public class PowerToolListener implements Listener {
         }
     }
 
-    // Returns the closest player that the given player is looking at.
-    // Does this by extending a cylinder from the given player's eyes out to
-    // 100-blocks. The cylinder has a radius of sqrt(1/2). For each player
-    // within 100 blocks, 2 points are tested: location + .5Y and location +
-    // 1.5Y (basically, the Y-midpoints of a player's bottom block and top
-    // block).
-    // Math voodoo provided by:
-    // http://www.flipcode.com/archives/Fast_Point-In-Cylinder_Test.shtml
+    // Determines closest player in-line with crosshairs.
+    // Uses ray-AABB intersection test.
     private Player findPlayerInSight(Player player) {
         Location eyeLocation = player.getEyeLocation();
         Vector origin = eyeLocation.toVector();
