@@ -30,7 +30,7 @@ import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
-import org.tyrannyofheaven.bukkit.util.ToHUtils;
+import org.bukkit.inventory.ItemStack;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Require;
@@ -82,27 +82,27 @@ public class SubCommands {
             sendMessage(player, colorize("`1(Add `w-a`1 to clear all binds from all items)"));
 
             // Get item in hand
-            int itemId;
+            ItemStack itemStack;
             if (item == null) {
-                itemId = player.getItemInHand().getTypeId();
-                if (itemId == Material.AIR.getId()) {
+                itemStack = player.getItemInHand();
+                if (itemStack.getTypeId() == Material.AIR.getId()) {
                     sendMessage(player, colorize("`rYou aren't holding anything!"));
                     return;
                 }
             }
             else {
-                Material material = ToHUtils.matchMaterial(item);
-                if (material == null) {
+                ItemKey matchedKey = ItemKey.fromString(item);
+                if (matchedKey == null) {
                     sendMessage(player, colorize("`rInvalid item ID or name."));
                     return;
                 }
-                itemId = material.getId();
+                itemStack = new ItemStack(matchedKey.getItemId(), 1, (short)0, matchedKey.getData());
             }
 
             // Clear all actions
-            if (plugin.removePowerTool(player, itemId)) {
+            if (plugin.removePowerTool(player, itemStack)) {
                 sendMessage(player, colorize("`yPower tool cleared."));
-                plugin.removePersistentPowerTool(player, itemId);
+                plugin.removePersistentPowerTool(player, itemStack);
             }
             else
                 sendMessage(player, colorize(MODIFY_GLOBAL_ERROR_MSG));
@@ -120,12 +120,12 @@ public class SubCommands {
         Player player = playerCheck(sender);
         if (player == null) return;
 
-        List<Map.Entry<Integer, PowerTool>> powertools = new ArrayList<Map.Entry<Integer, PowerTool>>(plugin.getPowerTools(player).entrySet());
+        List<Map.Entry<ItemKey, PowerTool>> powertools = new ArrayList<Map.Entry<ItemKey, PowerTool>>(plugin.getPowerTools(player).entrySet());
         // Sort by itemId
-        Collections.sort(powertools, new Comparator<Map.Entry<Integer, PowerTool>>() {
+        Collections.sort(powertools, new Comparator<Map.Entry<ItemKey, PowerTool>>() {
             @Override
-            public int compare(Entry<Integer, PowerTool> a, Entry<Integer, PowerTool> b) {
-                return a.getKey() - b.getKey();
+            public int compare(Entry<ItemKey, PowerTool> a, Entry<ItemKey, PowerTool> b) {
+                return a.getKey().compareTo(b.getKey());
             }
         });
 
@@ -146,14 +146,14 @@ public class SubCommands {
             if (end > powertools.size()) end = powertools.size();
             powertools = powertools.subList(page * TOOLS_PER_PAGE, end);
 
-            for (Map.Entry<Integer, PowerTool> me : powertools) {
+            for (Map.Entry<ItemKey, PowerTool> me : powertools) {
                 boolean headerSent = false;
 
                 for (PowerToolAction action : PowerToolAction.values()) {
                     PowerTool.Command command = me.getValue().getCommand(action);
                     if (command != null) {
                         if (!headerSent) {
-                            sendMessage(player, colorize("`y%s:"), PowerToolPlugin.getMaterialName(Material.getMaterial(me.getKey())));
+                            sendMessage(player, colorize("`y%s:"), me.getKey());
                             headerSent = true;
                         }
 
@@ -222,15 +222,15 @@ public class SubCommands {
 
     private void setPowerTool(Player player, String[] args, PowerToolAction action) {
         // Get item in hand
-        int itemId = player.getItemInHand().getTypeId();
-        if (itemId == Material.AIR.getId()) {
+        ItemStack itemStack = player.getItemInHand();
+        if (itemStack.getTypeId() == Material.AIR.getId()) {
             sendMessage(player, colorize("`rYou aren't holding anything!"));
             return;
         }
 
         if (args.length == 0) {
             // Clear the command
-            PowerTool pt = plugin.getPowerTool(player, itemId, false);
+            PowerTool pt = plugin.getPowerTool(player, itemStack, false);
             if (pt != null) {
                 if (pt.isGlobal()) {
                     // TODO admin permissions?
@@ -239,12 +239,12 @@ public class SubCommands {
                 }
                 pt.clearCommand(action);
                 if (pt.isEmpty()) {
-                    plugin.removePowerTool(player, itemId);
-                    plugin.removePersistentPowerTool(player, itemId);
+                    plugin.removePowerTool(player, itemStack);
+                    plugin.removePersistentPowerTool(player, itemStack);
                 }
                 else {
                     // Re-save
-                    plugin.savePersistentPowerTool(player, itemId, pt);
+                    plugin.savePersistentPowerTool(player, itemStack, pt);
                 }
             }
             sendMessage(player, colorize("`yPower tool (`Y%s`y) cleared."), action.getDisplayName());
@@ -283,7 +283,7 @@ public class SubCommands {
                 return;
             }
 
-            PowerTool pt = plugin.getPowerTool(player, itemId, false);
+            PowerTool pt = plugin.getPowerTool(player, itemStack, false);
             if (pt == null) {
                 // Only check limit if we have to create a new one
                 if (plugin.isOverLimit(player)) {
@@ -291,7 +291,7 @@ public class SubCommands {
                     return;
                 }
                 // Create a brand new power tool
-                pt = plugin.getPowerTool(player, itemId, true);
+                pt = plugin.getPowerTool(player, itemStack, true);
             }
 
             // Set the command
@@ -303,7 +303,7 @@ public class SubCommands {
             pt.setCommand(action, delimitedString(" ", (Object[])args), hasPlayerToken, hasLocationToken, hasAirToken);
             sendMessage(player, colorize("`yPower tool (`Y%s`y) set."), action.getDisplayName());
             
-            plugin.savePersistentPowerTool(player, itemId, pt);
+            plugin.savePersistentPowerTool(player, itemStack, pt);
         }
     }
 

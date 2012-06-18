@@ -38,6 +38,7 @@ import org.bukkit.command.CommandException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.BlockIterator;
 import org.tyrannyofheaven.bukkit.PowerTool.dao.PowerToolDao;
@@ -67,7 +68,7 @@ public class PowerToolPlugin extends JavaPlugin {
 
     private VersionInfo versionInfo;
 
-    private final Map<Integer, PowerTool> globalPowerTools = new HashMap<Integer, PowerTool>();
+    private final Map<ItemKey, PowerTool> globalPowerTools = new HashMap<ItemKey, PowerTool>();
 
     private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
 
@@ -181,7 +182,7 @@ public class PowerToolPlugin extends JavaPlugin {
 
         // Read global powertools
         globalPowerTools.clear();
-        Map<Integer, PowerTool> powertools = getDao().loadPowerTools(null);
+        Map<ItemKey, PowerTool> powertools = getDao().loadPowerTools(null);
         for (PowerTool pt : powertools.values()) {
             // Set global flag
             pt.setGlobal(true);
@@ -217,16 +218,18 @@ public class PowerToolPlugin extends JavaPlugin {
         return verbose;
     }
 
-    PowerTool getPowerTool(Player player, int itemId, boolean create) {
+    PowerTool getPowerTool(Player player, ItemStack item, boolean create) {
+        ItemKey key = ItemKey.fromItemStack(item);
+
         // Fetch global PowerTool first
-        PowerTool pt = globalPowerTools.get(itemId);
+        PowerTool pt = globalPowerTools.get(key);
 
         // If not defined, fetch player-specific PowerTool
         if (pt == null) {
             PlayerState ps = getPlayerState(player, create);
 
             if (ps != null)
-                pt = ps.getPowerTool(itemId, create);
+                pt = ps.getPowerTool(key, create);
         }
 
         return pt;
@@ -244,13 +247,14 @@ public class PowerToolPlugin extends JavaPlugin {
         return ps;
     }
 
-    boolean removePowerTool(Player player, int itemId) {
-        if (globalPowerTools.containsKey(itemId)) return false;
+    boolean removePowerTool(Player player, ItemStack item) {
+        ItemKey key = ItemKey.fromItemStack(item);
+        if (globalPowerTools.containsKey(key)) return false;
 
         PlayerState ps = getPlayerState(player, false);
         
         if (ps != null)
-            ps.removePowerTool(itemId);
+            ps.removePowerTool(key);
         return true;
     }
 
@@ -264,7 +268,7 @@ public class PowerToolPlugin extends JavaPlugin {
         return false;
     }
 
-    Map<Integer, PowerTool> getPowerTools(Player player) {
+    Map<ItemKey, PowerTool> getPowerTools(Player player) {
         PlayerState ps = getPlayerState(player, false);
         if (ps == null) return Collections.emptyMap();
         return ps.getPowerTools();
@@ -380,25 +384,27 @@ public class PowerToolPlugin extends JavaPlugin {
         return material.name().toLowerCase().replaceAll("_", "");
     }
 
-    void savePersistentPowerTool(Player player, int itemId, PowerTool powerTool) {
+    void savePersistentPowerTool(Player player, ItemStack item, PowerTool powerTool) {
         File playerConfigFile = getPlayerConfigFile(player);
         if (playerConfigFile == null) return;
 
         PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile);
 
         // Since each player has their own file, save at the global scope.
-        debug(this, "Saving persistent power tool (%d) for %s", itemId, player.getName());
-        playerDao.savePowerTool(null, itemId, powerTool);
+        ItemKey key = ItemKey.fromItemStack(item);
+        debug(this, "Saving persistent power tool (%s) for %s", key, player.getName());
+        playerDao.savePowerTool(null, key, powerTool);
     }
 
-    void removePersistentPowerTool(Player player, int itemId) {
+    void removePersistentPowerTool(Player player, ItemStack item) {
         File playerConfigFile = getPlayerConfigFile(player);
         if (playerConfigFile == null) return;
 
         PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile);
         
-        debug(this, "Removing persistent power tool (%d) for %s", itemId, player.getName());
-        playerDao.removePowerTool(null, itemId);
+        ItemKey key = ItemKey.fromItemStack(item);
+        debug(this, "Removing persistent power tool (%s) for %s", key, player.getName());
+        playerDao.removePowerTool(null, key);
     }
 
     void clearPersistentPowerTools(Player player) {
@@ -419,7 +425,7 @@ public class PowerToolPlugin extends JavaPlugin {
         if (playerConfigFile.exists()) {
             debug(this, "Loading persistent power tools for %s", player.getName());
             PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile);
-            Map<Integer, PowerTool> powerTools = playerDao.loadPowerTools(null);
+            Map<ItemKey, PowerTool> powerTools = playerDao.loadPowerTools(null);
             if (!powerTools.isEmpty()) {
                 // Load into player state
                 PlayerState ps = getPlayerState(player, true);
@@ -470,7 +476,7 @@ public class PowerToolPlugin extends JavaPlugin {
 
     private static class PlayerState {
 
-        private final Map<Integer, PowerTool> powerTools = new HashMap<Integer, PowerTool>();
+        private final Map<ItemKey, PowerTool> powerTools = new HashMap<ItemKey, PowerTool>();
 
         private boolean enabled = true;
 
@@ -478,22 +484,22 @@ public class PowerToolPlugin extends JavaPlugin {
 
         private long lastExecuteTime;
 
-        public Map<Integer, PowerTool> getPowerTools() {
+        public Map<ItemKey, PowerTool> getPowerTools() {
             return powerTools;
         }
 
-        public PowerTool getPowerTool(int itemId, boolean create) {
-            PowerTool pt = powerTools.get(itemId);
+        public PowerTool getPowerTool(ItemKey key, boolean create) {
+            PowerTool pt = powerTools.get(key);
             if (create && pt == null) {
                 pt = new PowerTool();
-                powerTools.put(itemId, pt);
+                powerTools.put(key, pt);
             }
             
             return pt;
         }
 
-        public void removePowerTool(int itemId) {
-            powerTools.remove(itemId);
+        public void removePowerTool(ItemKey key) {
+            powerTools.remove(key);
         }
 
         public boolean isEnabled() {
