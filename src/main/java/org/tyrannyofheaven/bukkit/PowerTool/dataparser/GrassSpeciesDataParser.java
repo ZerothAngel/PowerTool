@@ -41,12 +41,21 @@ public class GrassSpeciesDataParser implements ItemDataParser {
 
     @Override
     public Byte parseDataName(String dataName) {
-        GrassSpecies grassSpecies;
+        GrassSpecies grassSpecies = null;
         try {
-            grassSpecies = GrassSpecies.valueOf(dataName.toUpperCase());
+            int index = Integer.valueOf(dataName);
+            grassSpecies = GrassSpecies.values()[index];
         }
-        catch (IllegalArgumentException e) {
-            grassSpecies = null;
+        catch (NumberFormatException e) {
+        }
+        catch (IndexOutOfBoundsException e) {
+        }
+        if (grassSpecies == null) {
+            try {
+                grassSpecies = GrassSpecies.valueOf(dataName.toUpperCase());
+            }
+            catch (IllegalArgumentException e) {
+            }
         }
         if (grassSpecies == null) {
             grassSpecies = reverseMap.get(dataName.toLowerCase());

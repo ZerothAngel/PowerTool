@@ -30,12 +30,21 @@ public class TreeSpeciesDataParser implements ItemDataParser {
 
     @Override
     public Byte parseDataName(String dataName) {
-        TreeSpecies treeSpecies;
+        TreeSpecies treeSpecies = null;
         try {
-            treeSpecies = TreeSpecies.valueOf(dataName.toUpperCase());
+            int index = Integer.valueOf(dataName);
+            treeSpecies = TreeSpecies.values()[index];
         }
-        catch (IllegalArgumentException e) {
-            treeSpecies = null;
+        catch (NumberFormatException e) {
+        }
+        catch (IndexOutOfBoundsException e) {
+        }
+        if (treeSpecies == null) {
+            try {
+                treeSpecies = TreeSpecies.valueOf(dataName.toUpperCase());
+            }
+            catch (IllegalArgumentException e) {
+            }
         }
         if (treeSpecies != null)
             return treeSpecies.getData();

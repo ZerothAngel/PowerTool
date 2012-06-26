@@ -30,12 +30,21 @@ public class CoalTypeDataParser implements ItemDataParser {
 
     @Override
     public Byte parseDataName(String dataName) {
-        CoalType coalType;
+        CoalType coalType = null;
         try {
-            coalType = CoalType.valueOf(dataName.toUpperCase());
+            int index = Integer.valueOf(dataName);
+            coalType = CoalType.values()[index];
         }
-        catch (IllegalArgumentException e) {
-            coalType = null;
+        catch (NumberFormatException e) {
+        }
+        catch (IndexOutOfBoundsException e) {
+        }
+        if (coalType == null) {
+            try {
+                coalType = CoalType.valueOf(dataName.toUpperCase());
+            }
+            catch (IllegalArgumentException e) {
+            }
         }
         if (coalType != null)
             return coalType.getData();

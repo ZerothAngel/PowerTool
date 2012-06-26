@@ -41,12 +41,21 @@ public class DyeColorDataParser implements ItemDataParser {
 
     @Override
     public Byte parseDataName(String dataName) {
-        DyeColor dyeColor;
+        DyeColor dyeColor = null;
         try {
-            dyeColor = DyeColor.valueOf(dataName.toUpperCase());
+            int index = Integer.valueOf(dataName);
+            dyeColor = DyeColor.values()[index];
         }
-        catch (IllegalArgumentException e) {
-            dyeColor = null;
+        catch (NumberFormatException e) {
+        }
+        catch (IndexOutOfBoundsException e) {
+        }
+        if (dyeColor == null) {
+            try {
+                dyeColor = DyeColor.valueOf(dataName.toUpperCase());
+            }
+            catch (IllegalArgumentException e) {
+            }
         }
         if (dyeColor == null) {
             dyeColor = reverseMap.get(dataName.toLowerCase());

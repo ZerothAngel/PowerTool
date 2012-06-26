@@ -30,12 +30,21 @@ public class SandstoneTypeDataParser implements ItemDataParser {
 
     @Override
     public Byte parseDataName(String dataName) {
-        SandstoneType sandstoneType;
+        SandstoneType sandstoneType = null;
         try {
-            sandstoneType = SandstoneType.valueOf(dataName.toUpperCase());
+            int index = Integer.valueOf(dataName);
+            sandstoneType = SandstoneType.values()[index];
         }
-        catch (IllegalArgumentException e) {
-            sandstoneType = null;
+        catch (NumberFormatException e) {
+        }
+        catch (IndexOutOfBoundsException e) {
+        }
+        if (sandstoneType == null) {
+            try {
+                sandstoneType = SandstoneType.valueOf(dataName.toUpperCase());
+            }
+            catch (IllegalArgumentException e) {
+            }
         }
         if (sandstoneType != null)
             return sandstoneType.getData();
