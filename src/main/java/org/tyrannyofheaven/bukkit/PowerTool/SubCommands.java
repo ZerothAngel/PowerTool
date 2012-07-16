@@ -251,6 +251,17 @@ public class SubCommands {
             
         }
         else {
+            if (!plugin.isOmitFirstSlash()) {
+                // Require initial slash
+                if (args[0] != null && !args[0].startsWith("/")) {
+                    sendMessage(player, colorize("`rBound command must begin with slash."));
+                    return;
+                }
+
+                // Then remove it
+                args[0] = args[0].substring(1);
+            }
+
             // Validate command
             for (String name : disallowedCommands) {
                 if (name.equalsIgnoreCase(args[0])) {

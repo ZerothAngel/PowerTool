@@ -45,5 +45,11 @@ verbose: |
   be reminded if the item is bound to any commands. Set to false to
   suppress this message.
 
+omit-first-slash: |
+  If true, then commands entered from the command line (i.e. for "pt left"
+  and "pt right") should be entered with the first slash omitted. This only
+  affects "pt left"/"pt right" and not the global power tools or player-saved
+  power tools.
+
 debug: |
   Enable debug logging.

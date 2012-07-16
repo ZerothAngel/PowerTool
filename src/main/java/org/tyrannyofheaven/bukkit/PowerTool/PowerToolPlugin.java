@@ -62,6 +62,8 @@ public class PowerToolPlugin extends JavaPlugin {
 
     private static final boolean DEFAULT_VERBOSE = true;
 
+    private static final boolean DEFAULT_OMIT_FIRST_SLASH = true;
+
     public static final int MAX_TRACE_DISTANCE = 100;
 
     private final Logger logger = Logger.getLogger(getClass().getName());
@@ -91,6 +93,8 @@ public class PowerToolPlugin extends JavaPlugin {
     private GroupOption defaultGroupOption;
 
     private boolean verbose;
+    
+    private boolean omitFirstSlash;
 
     @Override
     public void onLoad() {
@@ -142,6 +146,7 @@ public class PowerToolPlugin extends JavaPlugin {
         zToken = config.getString("z-token", DEFAULT_Z_TOKEN);
         yAirToken = config.getString("y-air-token", DEFAULT_Y_AIR_TOKEN);
         verbose = config.getBoolean("verbose", DEFAULT_VERBOSE);
+        omitFirstSlash = config.getBoolean("omit-first-slash", DEFAULT_OMIT_FIRST_SLASH);
 
         // Group options
         groupOptions.clear();
@@ -216,6 +221,10 @@ public class PowerToolPlugin extends JavaPlugin {
 
     public boolean isVerbose() {
         return verbose;
+    }
+
+    public boolean isOmitFirstSlash() {
+        return omitFirstSlash;
     }
 
     PowerTool getPowerTool(Player player, ItemStack item, boolean create) {

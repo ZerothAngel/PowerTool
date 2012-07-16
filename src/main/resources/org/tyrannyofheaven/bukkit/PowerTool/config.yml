@@ -1,4 +1,4 @@
-config-version: 3
+config-version: 4
 
 player-token: '%p'
 
@@ -22,5 +22,7 @@ powertools:
     right-click: plugins
 
 verbose: true
+
+omit-first-slash: true
 
 debug: false
