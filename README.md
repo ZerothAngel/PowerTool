@@ -15,6 +15,8 @@ coordinates of the currently targeted block (up to 100 blocks away!) Note that
 `%Y` (capital-Y) is special in that it is the Y-coordinate of the nearest air
 block directly *above* the targeted block.
 
+Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.bukkit.org/server-mods/powertool/tickets/).
+
 ## Commands ##
 
 There's only one command, `/powertool` which may also be abbreviated `/pt`
@@ -101,6 +103,11 @@ Sources may be found on GitHub:
 
 *   [PowerTool](https://github.com/ZerothAngel/PowerTool)
 *   [ToHPluginUtils](https://github.com/ZerothAngel/ToHPluginUtils)
+
+Development builds may be found on my continous integration site:
+
+*   [PowerTool](http://ci.tyrannyofheaven.org/job/PowerTool/lastSuccessfulBuild/org.tyrannyofheaven.bukkit$PowerTool/) (Requires ToHPluginUtils.jar)
+*   [PowerTool-standalone](http://ci.tyrannyofheaven.org/job/PowerTool-standalone/lastSuccessfulBuild/org.tyrannyofheaven.bukkit$PowerTool/) (includes ToHPluginUtils, like the version distributed on dev.bukkit.org)
 
 ## To Do ##
 
