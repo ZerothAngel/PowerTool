@@ -106,8 +106,8 @@ Sources may be found on GitHub:
 
 Development builds may be found on my continous integration site:
 
-*   [PowerTool](http://ci.tyrannyofheaven.org/job/PowerTool/lastSuccessfulBuild/org.tyrannyofheaven.bukkit$PowerTool/) (Requires ToHPluginUtils.jar)
-*   [PowerTool-standalone](http://ci.tyrannyofheaven.org/job/PowerTool-standalone/lastSuccessfulBuild/org.tyrannyofheaven.bukkit$PowerTool/) (includes ToHPluginUtils, like the version distributed on dev.bukkit.org)
+*   [PowerTool](http://ci.tyrannyofheaven.org/job/PowerTool/) (Requires ToHPluginUtils.jar)
+*   [PowerTool-standalone](http://ci.tyrannyofheaven.org/job/PowerTool-standalone/) (includes ToHPluginUtils, like the version distributed on dev.bukkit.org)
 
 ## To Do ##
 
