@@ -29,7 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -65,8 +64,6 @@ public class PowerToolPlugin extends JavaPlugin {
     private static final boolean DEFAULT_OMIT_FIRST_SLASH = true;
 
     public static final int MAX_TRACE_DISTANCE = 100;
-
-    private final Logger logger = Logger.getLogger(getClass().getName());
 
     private VersionInfo versionInfo;
 
@@ -138,7 +135,7 @@ public class PowerToolPlugin extends JavaPlugin {
     }
 
     private void readConfig() {
-        logger.setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
+        getLogger().setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
 
         playerToken = config.getString("player-token", DEFAULT_PLAYER_TOKEN);
         xToken = config.getString("x-token", DEFAULT_X_TOKEN);
