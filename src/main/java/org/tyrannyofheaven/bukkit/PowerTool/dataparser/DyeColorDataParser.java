@@ -33,7 +33,7 @@ public class DyeColorDataParser implements ItemDataParser {
 
     @Override
     public String toDataName(byte data) {
-        DyeColor dyeColor = DyeColor.getByData(data);
+        DyeColor dyeColor = DyeColor.getByWoolData(data);
         if (dyeColor != null)
             return dyeColor.name().toLowerCase().replaceAll("-", "");
         return null;
@@ -61,7 +61,7 @@ public class DyeColorDataParser implements ItemDataParser {
             dyeColor = reverseMap.get(dataName.toLowerCase());
         }
         if (dyeColor != null)
-            return dyeColor.getData();
+            return dyeColor.getWoolData();
         return null;
     }
 

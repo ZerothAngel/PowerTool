@@ -31,6 +31,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Require;
@@ -96,7 +97,15 @@ public class SubCommands {
                     sendMessage(player, colorize("`rInvalid item ID or name."));
                     return;
                 }
-                itemStack = new ItemStack(matchedKey.getItemId(), 1, (short)0, matchedKey.getData());
+                itemStack = new ItemStack(matchedKey.getItemId(), 1, (short)0);
+                Material material = Material.getMaterial(matchedKey.getItemId());
+                // From ItemStack.createData
+                MaterialData data;
+                if (material == null)
+                    data = new MaterialData(matchedKey.getItemId(), matchedKey.getData()); // Eh, when would this happen?
+                else
+                    data = material.getNewData(matchedKey.getData());
+                itemStack.setData(data);
             }
 
             // Clear all actions
