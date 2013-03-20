@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -38,6 +39,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.BlockIterator;
 import org.tyrannyofheaven.bukkit.PowerTool.dao.PowerToolDao;
@@ -48,6 +51,8 @@ import org.tyrannyofheaven.bukkit.util.VersionInfo;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 
 public class PowerToolPlugin extends JavaPlugin {
+
+    private static final String PLAYER_METADATA_KEY = "PowerTool.PlayerState";
 
     private static final String DEFAULT_PLAYER_TOKEN = "%p";
 
@@ -68,8 +73,6 @@ public class PowerToolPlugin extends JavaPlugin {
     private VersionInfo versionInfo;
 
     private final Map<ItemKey, PowerTool> globalPowerTools = new HashMap<ItemKey, PowerTool>();
-
-    private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
 
     private FileConfiguration config;
 
@@ -100,8 +103,8 @@ public class PowerToolPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        synchronized (playerStates) {
-            playerStates.clear();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.removeMetadata(PLAYER_METADATA_KEY, this);
         }
 
         log(this, "%s disabled.", versionInfo.getVersionString());
@@ -242,13 +245,16 @@ public class PowerToolPlugin extends JavaPlugin {
     }
 
     private PlayerState getPlayerState(Player player, boolean create) {
-        PlayerState ps;
-        synchronized (playerStates) {
-            ps = playerStates.get(player.getName());
-            if (create && ps == null) {
-                ps = new PlayerState();
-                playerStates.put(player.getName(), ps);
+        PlayerState ps = null;
+        for (MetadataValue mv : player.getMetadata(PLAYER_METADATA_KEY)) {
+            if (mv.getOwningPlugin() == this) {
+                ps = (PlayerState)mv.value();
+                break;
             }
+        }
+        if (create && ps == null) {
+            ps = new PlayerState();
+            player.setMetadata(PLAYER_METADATA_KEY, new FixedMetadataValue(this, ps));
         }
         return ps;
     }
@@ -309,9 +315,7 @@ public class PowerToolPlugin extends JavaPlugin {
     }
 
     void forgetPlayer(Player player) {
-        synchronized (playerStates) {
-            playerStates.remove(player.getName());
-        }
+        player.removeMetadata(PLAYER_METADATA_KEY, this);
     }
 
     void execute(Player player, String commandString) {
