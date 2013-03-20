@@ -18,7 +18,6 @@ package org.tyrannyofheaven.bukkit.PowerTool;
 import org.bukkit.command.CommandSender;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
-import org.tyrannyofheaven.bukkit.util.command.Require;
 
 public class Commands {
 
@@ -29,7 +28,6 @@ public class Commands {
     }
 
     @Command("powertool")
-    @Require({ "powertool.use", "powertool.reload" })
     public SubCommands powertool(CommandSender sender, String[] args, HelpBuilder helpBuilder) {
         if (args.length == 0) {
             helpBuilder.withCommandSender(sender)

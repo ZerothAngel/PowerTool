@@ -19,9 +19,13 @@ import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -39,11 +43,17 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+
 public class PowerToolListener implements Listener {
 
     private static final Map<Action, PowerToolAction> actionMap;
 
     private final PowerToolPlugin plugin;
+
+    private final Cache<Material, List<String>> materialPermissionCache;
 
     static {
         Map<Action, PowerToolAction> am = new HashMap<Action, PowerToolAction>();
@@ -58,11 +68,35 @@ public class PowerToolListener implements Listener {
 
     PowerToolListener(PowerToolPlugin plugin) {
         this.plugin = plugin;
+        
+        materialPermissionCache = CacheBuilder.newBuilder()
+                .maximumSize(256)
+                .softValues()
+                .build(new CacheLoader<Material, List<String>>() {
+                    @Override
+                    public List<String> load(Material key) throws Exception {
+                        Set<String> permissions = new LinkedHashSet<String>();
+                        permissions.add("powertool.use." + key.getId()); // e.g. powertool.use.322
+                        permissions.add("powertool.use." + key.name().toLowerCase()); // e.g. powertool.use.golden_apple
+                        permissions.add("powertool.use." + key.name().toLowerCase().replaceAll("_", "")); // e.g. powertool.use.goldenapple
+                        return Collections.unmodifiableList(new ArrayList<String>(permissions));
+                    }
+                });
+    }
+
+    private boolean canUsePowerTool(Player player, ItemStack item) {
+        // Check wildcard first
+        if (player.hasPermission("powertool.use.*")) return true;
+        // Check specific permissions
+        List<String> permissions = materialPermissionCache.getUnchecked(item.getType());
+        for (String permission : permissions) {
+            if (player.hasPermission(permission)) return true;
+        }
+        return false;
     }
 
     @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (!event.getPlayer().hasPermission("powertool.use")) return;
         if (!plugin.getEnabled(event.getPlayer())) return;
 
         // NB: Don't care if it's canceled or not.
@@ -70,6 +104,8 @@ public class PowerToolListener implements Listener {
         // something we care about.
 
         if (!event.hasItem()) return; // no bare fists (for now...)
+
+        if (!canUsePowerTool(event.getPlayer(), event.getItem())) return;
 
         PowerTool pt = plugin.getPowerTool(event.getPlayer(), event.getItem(), false);
         if (pt != null) {
@@ -112,12 +148,13 @@ public class PowerToolListener implements Listener {
         if (event.getDamager() instanceof Player) {
             Player attacker = (Player)event.getDamager();
 
-            if (!attacker.hasPermission("powertool.use")) return;
             if (!plugin.getEnabled(attacker)) return;
 
             int itemId = attacker.getItemInHand().getTypeId();
 
             if (itemId == Material.AIR.getId()) return;
+
+            if (!canUsePowerTool(attacker, attacker.getItemInHand())) return;
 
             PowerTool pt = plugin.getPowerTool(attacker, attacker.getItemInHand(), false);
             if (pt != null) {
@@ -173,12 +210,13 @@ public class PowerToolListener implements Listener {
     public void onItemHeldChange(PlayerItemHeldEvent event) {
         if (!plugin.isVerbose()) return;
 
-        if (!event.getPlayer().hasPermission("powertool.use")) return;
         if (!plugin.getEnabled(event.getPlayer())) return;
 
         ItemStack itemStack = event.getPlayer().getInventory().getItem(event.getNewSlot());
         if (itemStack == null) return;
-        
+
+        if (!canUsePowerTool(event.getPlayer(), itemStack)) return;
+
         int itemId = itemStack.getTypeId();
         
         if (itemId == Material.AIR.getId()) return;

@@ -55,7 +55,7 @@ public class SubCommands {
     }
 
     @Command(value={ "left", "l" }, description="Bind a command to the current item (left-click)", varargs="command")
-    @Require("powertool.use")
+    @Require("powertool.create")
     public void left(CommandSender sender, String[] args) {
         Player player = playerCheck(sender);
         if (player == null) return;
@@ -64,7 +64,7 @@ public class SubCommands {
     }
 
     @Command(value={ "right", "r" }, description="Bind a command to the current item (right-click)", varargs="command")
-    @Require("powertool.use")
+    @Require("powertool.create")
     public void right(CommandSender sender, String[] args) {
         Player player = playerCheck(sender);
         if (player == null) return;
@@ -73,7 +73,7 @@ public class SubCommands {
     }
 
     @Command(value={ "clear", "clr", "c" }, description="Clear all binds from the current item")
-    @Require("powertool.use")
+    @Require("powertool.create")
     public void clear(CommandSender sender, @Option("-a") Boolean all, @Option(value="item", optional=true) String item) {
         Player player = playerCheck(sender);
         if (player == null) return;
@@ -124,7 +124,7 @@ public class SubCommands {
     }
 
     @Command(value={ "list", "ls" }, description="List all binds for all items")
-    @Require("powertool.use")
+    @Require("powertool.create")
     public void list(CommandSender sender, @Option(value="page", optional=true) Integer page) {
         Player player = playerCheck(sender);
         if (player == null) return;
@@ -180,7 +180,6 @@ public class SubCommands {
     }
 
     @Command(value="on", description="Turn power tools on for this session")
-    @Require("powertool.use")
     public void enable(CommandSender sender) {
         Player player = playerCheck(sender);
         if (player == null) return;
@@ -190,7 +189,6 @@ public class SubCommands {
     }
 
     @Command(value="off", description="Turn power tools off for this session")
-    @Require("powertool.use")
     public void disable(CommandSender sender) {
         Player player = playerCheck(sender);
         if (player == null) return;
@@ -200,7 +198,6 @@ public class SubCommands {
     }
 
     @Command(value={ "toggle", "t" }, description="Toggle power tools availability")
-    @Require("powertool.use")
     public void toggle(CommandSender sender) {
         Player player = playerCheck(sender);
         if (player == null) return;

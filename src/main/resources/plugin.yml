@@ -11,7 +11,16 @@ commands:
 
 permissions:
   powertool.use:
-    description: Allows use of the use of power tools
+    description: Allows full use and creation of power tools
+    default: op
+    children:
+      powertool.use.*: true
+      powertool.create: true
+  powertool.use.*:
+    description: Allows full use of power tools
+    default: op
+  powertool.create:
+    description: Allows creation of power tools
     default: op
   powertool.reload:
     description: Allows use of /powertool reload

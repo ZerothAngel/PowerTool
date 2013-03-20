@@ -49,7 +49,10 @@ or `/ptool`:
 PowerTool only supports Bukkit permissions (aka Superperms). By default, ops
 have all permissions.
 
-*   `powertool.use` &mdash; Allows setting and using power tools.
+*   `powertool.use` &mdash; Allows the use and creation of power tools. (Has `powertool.use.*` and `powertool.create` as child permissions.)
+*   `powertool.use.*` &mdash; Allows the use of all power tools.
+*   `powertool.use.<item-id>` &mdash; Allows the use of a specific power tool identified by **item-id**. **item-id** may be numeric (e.g. **322** for golden apple), or the [Bukkit Material name](https://github.com/Bukkit/Bukkit/blob/master/src/main/java/org/bukkit/Material.java) with or without underscores (e.g. **GOLDEN_APPLE** or **GOLDENAPPLE**). Note that Bukkit permissions are not case-sensitive, so both `powertool.use.golden_apple` and `powertool.use.GOLDEN_APPLE` work fine.
+*   `powertool.create` &mdash; Allows the creation of personal power tools. A player must be given this permission in order to use the left/right/list/clear subcommands.
 *   `powertool.reload` &mdash; Allows use of `/powertool reload`
 
 Additionally, per-group power tool limits may be defined using permissions. See
@@ -113,6 +116,4 @@ Development builds may be found on my continous integration site:
 
 *   Allow setting/clearing global power tools from the command line (for those
     with the proper permission, of course).
-*   In the case of global power tools, allow permissions to control which power
-    tools may be used. (Also supporting some sort of wildcard permission...)
 *   Allow player-specific power tools to override global ones.
