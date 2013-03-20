@@ -105,10 +105,10 @@ public class PowerToolListener implements Listener {
 
         if (!event.hasItem()) return; // no bare fists (for now...)
 
-        if (!canUsePowerTool(event.getPlayer(), event.getItem())) return;
-
         PowerTool pt = plugin.getPowerTool(event.getPlayer(), event.getItem(), false);
         if (pt != null) {
+            if (!canUsePowerTool(event.getPlayer(), event.getItem())) return;
+
             PowerToolAction action = actionMap.get(event.getAction());
             if (action != null) {
                 PowerTool.Command command = pt.getCommand(action);
@@ -154,10 +154,10 @@ public class PowerToolListener implements Listener {
 
             if (itemId == Material.AIR.getId()) return;
 
-            if (!canUsePowerTool(attacker, attacker.getItemInHand())) return;
-
             PowerTool pt = plugin.getPowerTool(attacker, attacker.getItemInHand(), false);
             if (pt != null) {
+                if (!canUsePowerTool(attacker, attacker.getItemInHand())) return;
+
                 PowerTool.Command command = pt.getCommand(PowerToolAction.LEFT_CLICK);
                 if (command != null) {
                     debug(plugin, "Power tool candidate*: %s", command);
@@ -215,14 +215,14 @@ public class PowerToolListener implements Listener {
         ItemStack itemStack = event.getPlayer().getInventory().getItem(event.getNewSlot());
         if (itemStack == null) return;
 
-        if (!canUsePowerTool(event.getPlayer(), itemStack)) return;
-
         int itemId = itemStack.getTypeId();
         
         if (itemId == Material.AIR.getId()) return;
 
         PowerTool pt = plugin.getPowerTool(event.getPlayer(), itemStack, false);
         if (pt != null) {
+            if (!canUsePowerTool(event.getPlayer(), itemStack)) return;
+
             boolean headerSent = false;
 
             for (PowerToolAction action : PowerToolAction.values()) {
