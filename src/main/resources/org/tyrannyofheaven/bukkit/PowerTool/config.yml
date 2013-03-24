@@ -1,4 +1,4 @@
-config-version: 4
+config-version: 5
 
 player-token: '%p'
 
@@ -24,5 +24,7 @@ powertools:
 verbose: true
 
 omit-first-slash: true
+
+use-display-names: false
 
 debug: false

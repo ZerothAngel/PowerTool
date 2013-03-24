@@ -29,18 +29,22 @@ public class YamlPowerToolDao implements PowerToolDao {
 
     private final File file;
 
+    private final boolean useDisplayNames;
+
     private FileConfiguration config;
     
-    public YamlPowerToolDao(PowerToolPlugin plugin, File file) {
+    public YamlPowerToolDao(PowerToolPlugin plugin, File file, boolean useDisplayNames) {
         this.plugin = plugin;
         this.file = file;
         config = YamlConfiguration.loadConfiguration(file);
+        this.useDisplayNames = useDisplayNames;
     }
     
-    public YamlPowerToolDao(PowerToolPlugin plugin, File file, FileConfiguration config) {
+    public YamlPowerToolDao(PowerToolPlugin plugin, File file, FileConfiguration config, boolean useDisplayNames) {
         this.plugin = plugin;
         this.file = file;
         this.config = config;
+        this.useDisplayNames = useDisplayNames;
     }
 
     public void setConfig(FileConfiguration config) {
@@ -75,7 +79,7 @@ public class YamlPowerToolDao implements PowerToolDao {
                     continue;
                 }
 
-                ItemKey matchedKey = ItemKey.fromString(me.getKey());
+                ItemKey matchedKey = ItemKey.fromString(me.getKey(), useDisplayNames);
                 if (matchedKey != null) {
                     if (matchedKey.equals(key)) {
                         return loadPowerTool(player == null, (ConfigurationSection)me.getValue(), me.getKey());
@@ -122,7 +126,7 @@ public class YamlPowerToolDao implements PowerToolDao {
                     continue;
                 }
 
-                ItemKey matchedKey = ItemKey.fromString(me.getKey());
+                ItemKey matchedKey = ItemKey.fromString(me.getKey(), useDisplayNames);
                 if (matchedKey != null) {
                     PowerTool pt = loadPowerTool(player == null, (ConfigurationSection)me.getValue(), me.getKey());
                     if (pt != null)
@@ -148,7 +152,7 @@ public class YamlPowerToolDao implements PowerToolDao {
                     continue;
                 }
 
-                ItemKey matchedKey = ItemKey.fromString(me.getKey());
+                ItemKey matchedKey = ItemKey.fromString(me.getKey(), useDisplayNames);
                 if (matchedKey != null) {
                     if (matchedKey.equals(key)) {
                         // TODO This can probably be done better...
@@ -178,7 +182,7 @@ public class YamlPowerToolDao implements PowerToolDao {
                 continue;
             }
 
-            ItemKey matchedKey = ItemKey.fromString(me.getKey());
+            ItemKey matchedKey = ItemKey.fromString(me.getKey(), useDisplayNames);
             if (matchedKey != null) {
                 if (matchedKey.equals(key)) {
                     // Remove this node first.

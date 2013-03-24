@@ -92,7 +92,7 @@ public class SubCommands {
                 }
             }
             else {
-                ItemKey matchedKey = ItemKey.fromString(item);
+                ItemKey matchedKey = ItemKey.fromString(item, plugin.isUseDisplayNames());
                 if (matchedKey == null) {
                     sendMessage(player, colorize("`rInvalid item ID or name."));
                     return;

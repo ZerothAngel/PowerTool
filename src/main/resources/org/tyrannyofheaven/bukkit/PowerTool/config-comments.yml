@@ -51,5 +51,9 @@ omit-first-slash: |
   affects "pt left"/"pt right" and not the global power tools or player-saved
   power tools.
 
+use-display-names: |
+  If true, then items are further differentiated by their custom name, if
+  given one.
+
 debug: |
   Enable debug logging.

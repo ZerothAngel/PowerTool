@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.tyrannyofheaven.bukkit.PowerTool.dataparser.CoalTypeDataParser;
 import org.tyrannyofheaven.bukkit.PowerTool.dataparser.DyeColorDataParser;
 import org.tyrannyofheaven.bukkit.PowerTool.dataparser.GrassSpeciesDataParser;
@@ -30,11 +31,13 @@ import org.tyrannyofheaven.bukkit.util.ToHUtils;
 
 public class ItemKey implements java.io.Serializable, java.lang.Comparable<ItemKey> {
 
-    private static final long serialVersionUID = 1449169277748310364L;
+    private static final long serialVersionUID = -769978887125760083L;
 
     private final int itemId;
     
     private final byte data;
+
+    private final String displayName;
 
     private static final Map<Integer, ItemDataParser> itemDataParsers;
 
@@ -66,13 +69,10 @@ public class ItemKey implements java.io.Serializable, java.lang.Comparable<ItemK
         itemDataParsers = Collections.unmodifiableMap(idps);
     }
 
-    public ItemKey(int itemId) {
-        this(itemId, (byte)0);
-    }
-
-    public ItemKey(int itemId, byte data) {
+    private ItemKey(int itemId, byte data, String displayName) {
         this.itemId = itemId;
         this.data = data;
+        this.displayName = displayName;
     }
 
     public int getItemId() {
@@ -87,12 +87,24 @@ public class ItemKey implements java.io.Serializable, java.lang.Comparable<ItemK
         return itemDataParsers.containsKey(getItemId());
     }
 
-    public static ItemKey fromItemStack(ItemStack itemStack) {
-        return new ItemKey(itemStack.getTypeId(), itemStack.getData().getData());
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public static ItemKey fromString(String str) {
-        String[] parts = str.split(":", 2);
+    public static ItemKey fromItemStack(ItemStack itemStack, boolean useDisplayNames) {
+        String displayName = null;
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        if (useDisplayNames && itemMeta != null && itemMeta.hasDisplayName())
+            displayName = itemMeta.getDisplayName();
+        return new ItemKey(itemStack.getTypeId(), itemStack.getData().getData(), displayName);
+    }
+
+    public static ItemKey fromString(String str, boolean useDisplayNames) {
+        String[] parts = str.split("/", 2);
+        String rest = parts[0];
+        String displayName = (useDisplayNames && parts.length == 2) ? parts[1] : null;
+ 
+        parts = rest.split(":", 2);
         Material material = ToHUtils.matchMaterial(parts[0]);
         if (material == null) return null;
         Byte data = null;
@@ -105,9 +117,9 @@ public class ItemKey implements java.io.Serializable, java.lang.Comparable<ItemK
             }
         }
         if (data == null)
-            return new ItemKey(material.getId());
+            return new ItemKey(material.getId(), (byte)0, displayName);
         else
-            return new ItemKey(material.getId(), data);
+            return new ItemKey(material.getId(), data, displayName);
     }
 
     @Override
@@ -115,9 +127,22 @@ public class ItemKey implements java.io.Serializable, java.lang.Comparable<ItemK
         int diff = getItemId() - o.getItemId();
         if (diff != 0) return diff;
         if (hasData()) {
-            return getData() - o.getData();
+            diff = getData() - o.getData();
         }
-        return 0;
+        if (diff != 0) return diff;
+        
+        if (getDisplayName() == null) {
+            if (o.getDisplayName() == null)
+                return 0;
+            else
+                return -1;
+        }
+        else {
+            if (o.getDisplayName() == null)
+                return 1;
+            else
+                return getDisplayName().compareTo(o.getDisplayName());
+        }
     }
 
     @Override
@@ -125,7 +150,9 @@ public class ItemKey implements java.io.Serializable, java.lang.Comparable<ItemK
         if (obj == this) return true;
         if (!(obj instanceof ItemKey)) return false;
         ItemKey o = (ItemKey)obj;
-        return o.getItemId() == getItemId() && (hasData() ? o.getData() == getData() : true);
+        return o.getItemId() == getItemId() &&
+                (hasData() ? o.getData() == getData() : true) &&
+                (getDisplayName() == null ? o.getDisplayName() == null : getDisplayName().equals(o.getDisplayName()));
     }
 
     @Override
@@ -133,6 +160,7 @@ public class ItemKey implements java.io.Serializable, java.lang.Comparable<ItemK
         int result = 17;
         result = 37 * result + getItemId();
         result = 37 * result + (hasData() ? (int)getData() : 0);
+        result = 37 * result + (getDisplayName() == null ? 0 : getDisplayName().hashCode());
         return result;
     }
     
@@ -147,6 +175,10 @@ public class ItemKey implements java.io.Serializable, java.lang.Comparable<ItemK
                 sb.append(':');
                 sb.append(dataName);
             }
+        }
+        if (getDisplayName() != null) {
+            sb.append('/');
+            sb.append(getDisplayName());
         }
         return sb.toString();
     }

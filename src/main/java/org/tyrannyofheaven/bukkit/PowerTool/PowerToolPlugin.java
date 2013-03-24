@@ -26,8 +26,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -68,6 +70,8 @@ public class PowerToolPlugin extends JavaPlugin {
 
     private static final boolean DEFAULT_OMIT_FIRST_SLASH = true;
 
+    private static final boolean DEFAULT_USE_DISPLAY_NAMES = false;
+
     public static final int MAX_TRACE_DISTANCE = 100;
 
     private VersionInfo versionInfo;
@@ -96,6 +100,8 @@ public class PowerToolPlugin extends JavaPlugin {
     
     private boolean omitFirstSlash;
 
+    private boolean useDisplayNames;
+
     @Override
     public void onLoad() {
         versionInfo = ToHUtils.getVersion(this);
@@ -115,14 +121,15 @@ public class PowerToolPlugin extends JavaPlugin {
         config = ToHFileUtils.getConfig(this);
         config.options().header(null);
 
-        // Set up DAO
-        dao = new YamlPowerToolDao(this, new File(getDataFolder(), "config.yml"), config);
-
         // Read/create config
         readConfig();
 
         // Upgrade/save config
         ToHFileUtils.upgradeConfig(this, config);
+
+        // Set up DAO, load global power tools
+        initializeDao();
+        loadGlobalPowerTools();
 
         // Install command handler
         (new ToHCommandExecutor<PowerToolPlugin>(this, new Commands(this))).registerCommands();
@@ -147,6 +154,7 @@ public class PowerToolPlugin extends JavaPlugin {
         yAirToken = config.getString("y-air-token", DEFAULT_Y_AIR_TOKEN);
         verbose = config.getBoolean("verbose", DEFAULT_VERBOSE);
         omitFirstSlash = config.getBoolean("omit-first-slash", DEFAULT_OMIT_FIRST_SLASH);
+        useDisplayNames = config.getBoolean("use-display-names", DEFAULT_USE_DISPLAY_NAMES);
 
         // Group options
         groupOptions.clear();
@@ -184,7 +192,9 @@ public class PowerToolPlugin extends JavaPlugin {
         }
         debug(this, "defaultGroupOption = %s", defaultGroupOption);
         debug(this, "groupOptions = %s", groupOptions);
+    }
 
+    private void loadGlobalPowerTools() {
         // Read global powertools
         globalPowerTools.clear();
         Map<ItemKey, PowerTool> powertools = getDao().loadPowerTools(null);
@@ -195,7 +205,7 @@ public class PowerToolPlugin extends JavaPlugin {
         globalPowerTools.putAll(powertools);
     }
 
-    PowerToolDao getDao() {
+    private PowerToolDao getDao() {
         return dao;
     }
 
@@ -227,8 +237,12 @@ public class PowerToolPlugin extends JavaPlugin {
         return omitFirstSlash;
     }
 
+    public boolean isUseDisplayNames() {
+        return useDisplayNames;
+    }
+
     PowerTool getPowerTool(Player player, ItemStack item, boolean create) {
-        ItemKey key = ItemKey.fromItemStack(item);
+        ItemKey key = ItemKey.fromItemStack(item, isUseDisplayNames());
 
         // Fetch global PowerTool first
         PowerTool pt = globalPowerTools.get(key);
@@ -260,7 +274,7 @@ public class PowerToolPlugin extends JavaPlugin {
     }
 
     boolean removePowerTool(Player player, ItemStack item) {
-        ItemKey key = ItemKey.fromItemStack(item);
+        ItemKey key = ItemKey.fromItemStack(item, isUseDisplayNames());
         if (globalPowerTools.containsKey(key)) return false;
 
         PlayerState ps = getPlayerState(player, false);
@@ -382,10 +396,38 @@ public class PowerToolPlugin extends JavaPlugin {
 
     synchronized void reload() {
         config = ToHFileUtils.getConfig(this);
-        if (getDao() instanceof YamlPowerToolDao) { // groan
-            ((YamlPowerToolDao)getDao()).setConfig(config);
-        }
         readConfig();
+        initializeDao();
+        loadGlobalPowerTools();
+        
+        // Re-load power tools of all online players
+        final Queue<String> playersToRefresh = new LinkedList<String>();
+        for (Player player : Bukkit.getOnlinePlayers())
+            playersToRefresh.add(player.getName());
+
+        // Do it synchronously with a delay between each load to minimize lag
+        if (!playersToRefresh.isEmpty()) {
+            final PowerToolPlugin plugin = this;
+            final long delay = 5L; // 5 ticks
+            Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+                @Override
+                public void run() {
+                    if (!playersToRefresh.isEmpty()) {
+                        String playerName = playersToRefresh.remove();
+                        Player player = Bukkit.getPlayerExact(playerName);
+                        if (player != null)
+                            loadPersistentPowerTools(player);
+                        
+                        if (!playersToRefresh.isEmpty())
+                            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this, delay);
+                    }
+                }
+            }, delay);
+        }
+    }
+
+    private void initializeDao() {
+        dao = new YamlPowerToolDao(this, new File(getDataFolder(), "config.yml"), config, isUseDisplayNames());
     }
 
     public static String getMaterialName(Material material) {
@@ -398,10 +440,10 @@ public class PowerToolPlugin extends JavaPlugin {
         File playerConfigFile = getPlayerConfigFile(player);
         if (playerConfigFile == null) return;
 
-        PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile);
+        PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile, isUseDisplayNames());
 
         // Since each player has their own file, save at the global scope.
-        ItemKey key = ItemKey.fromItemStack(item);
+        ItemKey key = ItemKey.fromItemStack(item, isUseDisplayNames());
         debug(this, "Saving persistent power tool (%s) for %s", key, player.getName());
         playerDao.savePowerTool(null, key, powerTool);
     }
@@ -410,9 +452,9 @@ public class PowerToolPlugin extends JavaPlugin {
         File playerConfigFile = getPlayerConfigFile(player);
         if (playerConfigFile == null) return;
 
-        PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile);
+        PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile, isUseDisplayNames());
         
-        ItemKey key = ItemKey.fromItemStack(item);
+        ItemKey key = ItemKey.fromItemStack(item, isUseDisplayNames());
         debug(this, "Removing persistent power tool (%s) for %s", key, player.getName());
         playerDao.removePowerTool(null, key);
     }
@@ -434,7 +476,7 @@ public class PowerToolPlugin extends JavaPlugin {
         
         if (playerConfigFile.exists()) {
             debug(this, "Loading persistent power tools for %s", player.getName());
-            PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile);
+            PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile, isUseDisplayNames());
             Map<ItemKey, PowerTool> powerTools = playerDao.loadPowerTools(null);
             if (!powerTools.isEmpty()) {
                 // Load into player state
