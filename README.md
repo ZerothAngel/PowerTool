@@ -107,7 +107,8 @@ Sources may be found on GitHub:
 *   [PowerTool](https://github.com/ZerothAngel/PowerTool)
 *   [ToHPluginUtils](https://github.com/ZerothAngel/ToHPluginUtils)
 
-Development builds may be found on my continous integration site:
+Development builds of this project can be acquired at the provided continuous integration server. 
+These builds have not been approved by the BukkitDev staff. Use them at your own risk.
 
 *   [PowerTool](http://ci.tyrannyofheaven.org/job/PowerTool/) (Requires ToHPluginUtils.jar)
 *   [PowerTool-standalone](http://ci.tyrannyofheaven.org/job/PowerTool-standalone/) (includes ToHPluginUtils, like the version distributed on dev.bukkit.org)
