@@ -131,7 +131,7 @@ public class PowerToolListener implements Listener {
                             commandString = plugin.substituteLocation(event.getPlayer(), event.getClickedBlock(), commandString, command.hasAirToken());
                         }
                         if (commandString != null) {
-                            plugin.execute(event.getPlayer(), commandString, pt.isRunAsConsole());
+                            plugin.execute(event.getPlayer(), commandString, pt.isRunAsConsole(), pt.getPermissions());
                         }
                     }
                     else {
@@ -183,7 +183,7 @@ public class PowerToolListener implements Listener {
                                 commandString = plugin.substituteLocation(attacker, null, commandString, command.hasAirToken());
                             }
                             if (commandString != null) {
-                                plugin.execute(attacker, commandString, pt.isRunAsConsole());
+                                plugin.execute(attacker, commandString, pt.isRunAsConsole(), pt.getPermissions());
                             }
                         }
                     }

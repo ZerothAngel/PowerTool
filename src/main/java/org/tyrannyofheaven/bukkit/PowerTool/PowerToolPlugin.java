@@ -22,6 +22,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.warn;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,6 +45,8 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
+import org.bukkit.permissions.Permissible;
+import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.BlockIterator;
 import org.tyrannyofheaven.bukkit.PowerTool.dao.PowerToolDao;
@@ -328,9 +331,13 @@ public class PowerToolPlugin extends JavaPlugin {
         player.removeMetadata(PLAYER_METADATA_KEY, this);
     }
 
-    void execute(Player player, String commandString, boolean runAsConsole) {
+    void execute(Player player, String commandString, boolean runAsConsole, Map<String, Boolean> permissions) {
         debug(this, "Executing command: %s", commandString);
         try {
+            // Set temporary permissions, if needed
+            if (!permissions.isEmpty())
+                setTempPermissions(player, permissions);
+
             PlayerCommandPreprocessEvent pcpe = new PlayerCommandPreprocessEvent(player, "/" + commandString);
             getServer().getPluginManager().callEvent(pcpe);
             
@@ -529,6 +536,43 @@ public class PowerToolPlugin extends JavaPlugin {
 
         int limit = groupOption.getLimit();
         return limit > -1 && current >= limit;
+    }
+
+    private void setTempPermissions(Permissible permissible, Map<String, Boolean> permissions) {
+        // Create attachment that will live for only 1 tick
+        PermissionAttachment pa = permissible.addAttachment(this, 1);
+        
+        // Set permissions by cheating, avoiding unnecessary recalculatePermissions() calls (borrowed from zPerms)
+        boolean success = false;
+        try {
+            Field perms = pa.getClass().getDeclaredField("permissions");
+            perms.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<String, Boolean> privatePerms = (Map<String, Boolean>)perms.get(pa);
+            privatePerms.clear();
+            privatePerms.putAll(permissions);
+            pa.getPermissible().recalculatePermissions();
+            success = true;
+        }
+        catch (SecurityException e) {
+            // Do nothing
+        }
+        catch (NoSuchFieldException e) {
+            // Do nothing
+        }
+        catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+        catch (IllegalAccessException e) {
+            // Do nothing
+        }
+        
+        // Fall back to the slow, but legal way
+        if (!success) {
+            for (Map.Entry<String, Boolean> me : permissions.entrySet()) {
+                pa.setPermission(me.getKey(), me.getValue());
+            }
+        }
     }
 
     private static class PlayerState {

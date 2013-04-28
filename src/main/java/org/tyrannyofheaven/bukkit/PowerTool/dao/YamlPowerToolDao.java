@@ -4,6 +4,8 @@ import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.warn;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.configuration.ConfigurationSection;
@@ -19,6 +21,8 @@ import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 public class YamlPowerToolDao implements PowerToolDao {
 
     private static final String POWERTOOLS_SECTION_NAME = "powertools";
+
+    private static final String BAD_PERMISSIONS_TYPE = "Power tool '%s' permissions must be a string, list of strings, or list of maps";
 
     private static final String NOT_MAP_NODE_MSG = "%s must be a mapping node";
 
@@ -101,6 +105,7 @@ public class YamlPowerToolDao implements PowerToolDao {
                         // If global, read/set additional flags
                         if (global) {
                             pt.setRunAsConsole(ptSection.getBoolean("run-as-console", false));
+                            parsePermissions(pt, ptSection, materialName);
                             pt.setGlobal(true);
                         }
 
@@ -112,6 +117,39 @@ public class YamlPowerToolDao implements PowerToolDao {
             }
         }
         return powerTools;
+    }
+
+    private void parsePermissions(PowerTool pt, ConfigurationSection node, String materialName) {
+        Object obj = node.get("permissions");
+        if (obj == null) return;
+
+        if (obj instanceof String) {
+            pt.setPermission((String)obj);
+        }
+        else if (obj instanceof List<?>) {
+            Map<String, Boolean> permissions = new LinkedHashMap<String, Boolean>();
+            for (Object o : (List<?>)obj) {
+                if (o instanceof String) {
+                    permissions.put((String)o, Boolean.TRUE);
+                }
+                else if (o instanceof Map<?, ?>) {
+                    @SuppressWarnings("unchecked")
+                    Map<Object, Object> permMap = (Map<Object, Object>)o;
+                    for (Map.Entry<Object, Object> me : permMap.entrySet()) {
+                        if (me.getValue() instanceof Boolean) {
+                            permissions.put(me.getKey().toString(), (Boolean)me.getValue());
+                        }
+                        else
+                            warn(plugin, "Power tool '%s' permission '%s' not a boolean; ignored", materialName, me.getKey());
+                    }
+                }
+                else
+                    warn(plugin, BAD_PERMISSIONS_TYPE, materialName);
+            }
+            pt.setPermissions(permissions);
+        }
+        else
+            warn(plugin, BAD_PERMISSIONS_TYPE, materialName);
     }
 
     @Override

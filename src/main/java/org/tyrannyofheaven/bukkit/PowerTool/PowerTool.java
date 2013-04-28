@@ -15,7 +15,10 @@
  */
 package org.tyrannyofheaven.bukkit.PowerTool;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
@@ -27,6 +30,8 @@ public class PowerTool {
     private boolean global;
 
     private boolean runAsConsole;
+
+    private Map<String, Boolean> permissions = Collections.emptyMap();
 
     public Command getCommand(PowerToolAction action) {
         if (action == null)
@@ -66,6 +71,32 @@ public class PowerTool {
 
     public void setRunAsConsole(boolean runAsConsole) {
         this.runAsConsole = runAsConsole;
+    }
+
+    public Map<String, Boolean> getPermissions() {
+        if (isGlobal())
+            return permissions;
+        else
+            return Collections.emptyMap();
+    }
+    
+    public void setPermissions(Map<String, Boolean> permissions) {
+        this.permissions = Collections.unmodifiableMap(permissions);
+    }
+    
+    public void setPermissions(Collection<String> permissions) {
+        Map<String, Boolean> permMap = new LinkedHashMap<String, Boolean>();
+        for (String permission : permissions)
+            permMap.put(permission, Boolean.TRUE);
+        this.permissions = Collections.unmodifiableMap(permMap);
+    }
+
+    public void setPermission(String permission, boolean value) {
+        this.permissions = Collections.singletonMap(permission, value);
+    }
+
+    public void setPermission(String permission) {
+        this.permissions = Collections.singletonMap(permission, Boolean.TRUE);
     }
 
     public static class Command {
