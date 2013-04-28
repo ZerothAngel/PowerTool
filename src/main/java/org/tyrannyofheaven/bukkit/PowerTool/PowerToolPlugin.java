@@ -37,6 +37,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandException;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -327,7 +328,7 @@ public class PowerToolPlugin extends JavaPlugin {
         player.removeMetadata(PLAYER_METADATA_KEY, this);
     }
 
-    void execute(Player player, String commandString) {
+    void execute(Player player, String commandString, boolean runAsConsole) {
         debug(this, "Executing command: %s", commandString);
         try {
             PlayerCommandPreprocessEvent pcpe = new PlayerCommandPreprocessEvent(player, "/" + commandString);
@@ -338,7 +339,16 @@ public class PowerToolPlugin extends JavaPlugin {
                 return;
             }
 
-            getServer().dispatchCommand(player, pcpe.getMessage().substring(1));
+            CommandSender sender;
+            if (runAsConsole) {
+                // Use console instead (I have a bad feeling about this...)
+                sender = getServer().getConsoleSender();
+                debug(this, "(running as console)");
+            }
+            else {
+                sender = player;
+            }
+            getServer().dispatchCommand(sender, pcpe.getMessage().substring(1));
         }
         catch (CommandException e) {
             error(this, "Execution failed: %s", commandString, e);

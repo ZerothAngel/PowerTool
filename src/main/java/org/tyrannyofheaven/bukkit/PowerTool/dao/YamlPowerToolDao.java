@@ -98,7 +98,11 @@ public class YamlPowerToolDao implements PowerToolDao {
                 if (matchedKey != null) {
                     PowerTool pt = loadPowerTool(ptSection, materialName);
                     if (pt != null) {
-                        pt.setGlobal(global);
+                        // If global, read/set additional flags
+                        if (global) {
+                            pt.setRunAsConsole(ptSection.getBoolean("run-as-console", false));
+                            pt.setGlobal(true);
+                        }
 
                         powerTools.put(matchedKey, pt);
                     }

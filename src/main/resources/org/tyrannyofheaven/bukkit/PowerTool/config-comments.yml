@@ -37,8 +37,10 @@ powertools: |
     item_id_or_name:
       left-click: command-to-execute-when-left-clicked
       right-click: command-to-execute-when-right-clicked
+      run-as-console: true/false
 
   "left-click" or "right-click" may be omitted.
+  "run-as-console" may be omitted, in which case it defaults to false.
 
 verbose: |
   If true, when the player selects an item on their hot bar, they will

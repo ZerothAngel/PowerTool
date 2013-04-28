@@ -118,3 +118,5 @@ These builds have not been approved by the BukkitDev staff. Use them at your own
 *   Allow setting/clearing global power tools from the command line (for those
     with the proper permission, of course).
 *   Allow player-specific power tools to override global ones.
+*   Allow global power tool flags (e.g. run-as-console) to be assigned to each individual action.
+*   Allow global power tools to temporarily give a player certain permission(s) before executing a command. A safer, finer-grained alternative to run-as-console.

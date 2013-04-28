@@ -26,6 +26,8 @@ public class PowerTool {
 
     private boolean global;
 
+    private boolean runAsConsole;
+
     public Command getCommand(PowerToolAction action) {
         if (action == null)
             throw new IllegalArgumentException("action cannot be null");
@@ -56,6 +58,14 @@ public class PowerTool {
 
     public void setGlobal(boolean global) {
         this.global = global;
+    }
+
+    public boolean isRunAsConsole() {
+        return isGlobal() && runAsConsole; // paranoid
+    }
+
+    public void setRunAsConsole(boolean runAsConsole) {
+        this.runAsConsole = runAsConsole;
     }
 
     public static class Command {
