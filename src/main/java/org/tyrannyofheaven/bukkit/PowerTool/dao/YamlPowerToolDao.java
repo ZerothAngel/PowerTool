@@ -9,7 +9,6 @@ import java.util.Map;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.tyrannyofheaven.bukkit.PowerTool.ItemKey;
 import org.tyrannyofheaven.bukkit.PowerTool.PowerTool;
 import org.tyrannyofheaven.bukkit.PowerTool.PowerToolAction;
@@ -18,6 +17,8 @@ import org.tyrannyofheaven.bukkit.util.ToHFileUtils;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 
 public class YamlPowerToolDao implements PowerToolDao {
+
+    private static final String POWERTOOLS_SECTION_NAME = "powertools";
 
     private static final String NOT_MAP_NODE_MSG = "%s must be a mapping node";
 
@@ -51,48 +52,11 @@ public class YamlPowerToolDao implements PowerToolDao {
         this.config = config;
     }
 
-    private String getMaterialPath(Player player, ItemKey key) {
-        return String.format("%s.%s", getBasePath(player), key);
+    private String getMaterialPath(ItemKey key) {
+        return String.format("%s.%s", POWERTOOLS_SECTION_NAME, key);
     }
 
-    private String getBasePath(Player player) {
-        String basePath;
-        if (player != null) {
-            basePath = String.format("players.%s", player.getName());
-        }
-        else {
-            basePath = "powertools";
-        }
-        return basePath;
-    }
-
-    @Override
-    public PowerTool loadPowerTool(Player player, ItemKey key) {
-        ConfigurationSection section = config.getConfigurationSection(getBasePath(player));
-        if (section != null) {
-            Map<String, Object> nodes = section.getValues(false);
-
-            // Have to iterate since the keys can have many forms...
-            for (Map.Entry<String, Object> me : nodes.entrySet()) {
-                if (!(me.getValue() instanceof ConfigurationSection)) {
-                    warn(plugin, NOT_MAP_NODE_MSG, me.getKey());
-                    continue;
-                }
-
-                ItemKey matchedKey = ItemKey.fromString(me.getKey(), useDisplayNames);
-                if (matchedKey != null) {
-                    if (matchedKey.equals(key)) {
-                        return loadPowerTool(player == null, (ConfigurationSection)me.getValue(), me.getKey());
-                    }
-                }
-                else
-                    warn(plugin, UNKNOWN_MATERIAL_MSG, me.getKey());
-            }
-        }
-        return null;
-    }
-
-    private PowerTool loadPowerTool(boolean global, ConfigurationSection node, String materialName) {
+    private PowerTool loadPowerTool(ConfigurationSection node, String materialName) {
         if (node != null) {
             PowerTool pt = new PowerTool();
             for (PowerToolAction action : PowerToolAction.values()) {
@@ -114,34 +78,41 @@ public class YamlPowerToolDao implements PowerToolDao {
     }
 
     @Override
-    public Map<ItemKey, PowerTool> loadPowerTools(Player player) {
+    public Map<ItemKey, PowerTool> loadPowerTools(boolean global) {
         Map<ItemKey, PowerTool> powerTools = new HashMap<ItemKey, PowerTool>();
-        ConfigurationSection section = config.getConfigurationSection(getBasePath(player));
+        ConfigurationSection section = config.getConfigurationSection(POWERTOOLS_SECTION_NAME);
         if (section != null) {
             Map<String, Object> nodes = section.getValues(false);
 
             for (Map.Entry<String, Object> me : nodes.entrySet()) {
+                String materialName = me.getKey();
+
                 if (!(me.getValue() instanceof ConfigurationSection)) {
-                    warn(plugin, NOT_MAP_NODE_MSG, me.getKey());
+                    warn(plugin, NOT_MAP_NODE_MSG, materialName);
                     continue;
                 }
 
-                ItemKey matchedKey = ItemKey.fromString(me.getKey(), useDisplayNames);
+                ConfigurationSection ptSection = (ConfigurationSection)me.getValue();
+
+                ItemKey matchedKey = ItemKey.fromString(materialName, useDisplayNames);
                 if (matchedKey != null) {
-                    PowerTool pt = loadPowerTool(player == null, (ConfigurationSection)me.getValue(), me.getKey());
-                    if (pt != null)
+                    PowerTool pt = loadPowerTool(ptSection, materialName);
+                    if (pt != null) {
+                        pt.setGlobal(global);
+
                         powerTools.put(matchedKey, pt);
+                    }
                 }
                 else
-                    warn(plugin, UNKNOWN_MATERIAL_MSG, me.getKey());
+                    warn(plugin, UNKNOWN_MATERIAL_MSG, materialName);
             }
         }
         return powerTools;
     }
 
     @Override
-    public void removePowerTool(Player player, ItemKey key) {
-        ConfigurationSection section = config.getConfigurationSection(getBasePath(player));
+    public void removePowerTool(ItemKey key) {
+        ConfigurationSection section = config.getConfigurationSection(POWERTOOLS_SECTION_NAME);
         if (section != null) {
             Map<String, Object> nodes = section.getValues(false);
 
@@ -156,7 +127,7 @@ public class YamlPowerToolDao implements PowerToolDao {
                 if (matchedKey != null) {
                     if (matchedKey.equals(key)) {
                         // TODO This can probably be done better...
-                        config.set(String.format("%s.%s", getBasePath(player), me.getKey()), null); // FIXME added a few commits after CB1317
+                        config.set(String.format("%s.%s", POWERTOOLS_SECTION_NAME, me.getKey()), null); // FIXME added a few commits after CB1317
                         ToHFileUtils.saveConfig(plugin, config, file.getParentFile(), file.getName());
                         break;
                     }
@@ -168,10 +139,10 @@ public class YamlPowerToolDao implements PowerToolDao {
     }
 
     @Override
-    public void savePowerTool(Player player, ItemKey key, PowerTool powerTool) {
-        ConfigurationSection section = config.getConfigurationSection(getBasePath(player));
+    public void savePowerTool(ItemKey key, PowerTool powerTool) {
+        ConfigurationSection section = config.getConfigurationSection(POWERTOOLS_SECTION_NAME);
         if (section == null)
-            section = config.createSection(getBasePath(player));
+            section = config.createSection(POWERTOOLS_SECTION_NAME);
 
         Map<String, Object> nodes = section.getValues(false);
 
@@ -186,7 +157,7 @@ public class YamlPowerToolDao implements PowerToolDao {
             if (matchedKey != null) {
                 if (matchedKey.equals(key)) {
                     // Remove this node first.
-                    config.set(String.format("%s.%s", getBasePath(player), me.getKey()), null); // FIXME
+                    config.set(String.format("%s.%s", POWERTOOLS_SECTION_NAME, me.getKey()), null); // FIXME
                     break;
                 }
             }
@@ -195,7 +166,7 @@ public class YamlPowerToolDao implements PowerToolDao {
         }
         
         // Do the actual save.
-        String materialPath = getMaterialPath(player, key);
+        String materialPath = getMaterialPath(key);
         for (PowerToolAction action : PowerToolAction.values()) {
             PowerTool.Command command = powerTool.getCommand(action);
             if (command != null) {

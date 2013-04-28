@@ -197,12 +197,7 @@ public class PowerToolPlugin extends JavaPlugin {
     private void loadGlobalPowerTools() {
         // Read global powertools
         globalPowerTools.clear();
-        Map<ItemKey, PowerTool> powertools = getDao().loadPowerTools(null);
-        for (PowerTool pt : powertools.values()) {
-            // Set global flag
-            pt.setGlobal(true);
-        }
-        globalPowerTools.putAll(powertools);
+        globalPowerTools.putAll(getDao().loadPowerTools(true));
     }
 
     private PowerToolDao getDao() {
@@ -445,7 +440,7 @@ public class PowerToolPlugin extends JavaPlugin {
         // Since each player has their own file, save at the global scope.
         ItemKey key = ItemKey.fromItemStack(item, isUseDisplayNames());
         debug(this, "Saving persistent power tool (%s) for %s", key, player.getName());
-        playerDao.savePowerTool(null, key, powerTool);
+        playerDao.savePowerTool(key, powerTool);
     }
 
     void removePersistentPowerTool(Player player, ItemStack item) {
@@ -456,7 +451,7 @@ public class PowerToolPlugin extends JavaPlugin {
         
         ItemKey key = ItemKey.fromItemStack(item, isUseDisplayNames());
         debug(this, "Removing persistent power tool (%s) for %s", key, player.getName());
-        playerDao.removePowerTool(null, key);
+        playerDao.removePowerTool(key);
     }
 
     void clearPersistentPowerTools(Player player) {
@@ -477,7 +472,7 @@ public class PowerToolPlugin extends JavaPlugin {
         if (playerConfigFile.exists()) {
             debug(this, "Loading persistent power tools for %s", player.getName());
             PowerToolDao playerDao = new YamlPowerToolDao(this, playerConfigFile, isUseDisplayNames());
-            Map<ItemKey, PowerTool> powerTools = playerDao.loadPowerTools(null);
+            Map<ItemKey, PowerTool> powerTools = playerDao.loadPowerTools(false);
             if (!powerTools.isEmpty()) {
                 // Load into player state
                 PlayerState ps = getPlayerState(player, true);
