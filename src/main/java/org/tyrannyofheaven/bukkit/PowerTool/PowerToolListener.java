@@ -42,6 +42,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
+import org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -76,6 +77,7 @@ public class PowerToolListener implements Listener {
                     @Override
                     public List<String> load(Material key) throws Exception {
                         Set<String> permissions = new LinkedHashSet<String>();
+                        permissions.add("powertool.use.*"); // wildcard
                         permissions.add("powertool.use." + key.getId()); // e.g. powertool.use.322
                         permissions.add("powertool.use." + key.name().toLowerCase()); // e.g. powertool.use.golden_apple
                         permissions.add("powertool.use." + key.name().toLowerCase().replaceAll("_", "")); // e.g. powertool.use.goldenapple
@@ -85,14 +87,8 @@ public class PowerToolListener implements Listener {
     }
 
     private boolean canUsePowerTool(Player player, ItemStack item) {
-        // Check wildcard first
-        if (player.hasPermission("powertool.use.*")) return true;
-        // Check specific permissions
         List<String> permissions = materialPermissionCache.getUnchecked(item.getType());
-        for (String permission : permissions) {
-            if (player.hasPermission(permission)) return true;
-        }
-        return false;
+        return PermissionUtils.hasOnePermission(player, true, permissions.toArray(new String[permissions.size()]));
     }
 
     @EventHandler(priority=EventPriority.NORMAL)
