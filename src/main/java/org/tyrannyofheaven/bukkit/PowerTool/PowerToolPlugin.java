@@ -149,7 +149,7 @@ public class PowerToolPlugin extends JavaPlugin {
     }
 
     private void readConfig() {
-        getLogger().setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
+        getLogger().setLevel(config.getBoolean("debug", false) ? Level.CONFIG : null);
 
         playerToken = config.getString("player-token", DEFAULT_PLAYER_TOKEN);
         xToken = config.getString("x-token", DEFAULT_X_TOKEN);
